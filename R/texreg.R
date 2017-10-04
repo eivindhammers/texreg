@@ -398,8 +398,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
           dr <- compute.width(output.matrix[, i], left = FALSE, 
               single.row = FALSE, bracket = separator)
         }
-        coldef <- paste0(coldef, "D{", separator, "}{", separator, "}{", 
-            dl, separator, dr, "}", margin.arg, " ")
+        coldef <- paste0(coldef, "S[table-format=", dl, separator, dr, "]", margin.arg, " ")
       }
     }
   }
