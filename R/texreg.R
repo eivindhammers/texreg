@@ -226,7 +226,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
 # texreg function
 
 texreg <- function(l, file = NULL, single.row = FALSE, 
-    stars = c(0.001, 0.01, 0.05), custom.model.names = NULL, 
+    stars = c(0.001, 0.01, 0.05), custom.model.names = NULL, col.groups = NULL, 
     custom.coef.names = NULL, custom.coef.map = NULL,
     custom.gof.names = NULL, custom.note = NULL, digits = 2, 
     leading.zero = TRUE, symbol = "\\cdot", override.coef = 0, 
@@ -276,6 +276,11 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     scalebox <- NULL
     warning(paste("longtable and scalebox are not compatible. Setting", 
     "scalebox = NULL."))
+  }
+  
+  # Check that col.group is a list
+  if (!is.null(col.group) & !is.list(col.group)) {
+    stop("col.group must be a list")
   }
   
   models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
@@ -475,6 +480,21 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     tablehead <- paste0(tablehead, "\\toprule", linesep)
   } else {
     tablehead <- paste0(tablehead, "\\hline", linesep)
+  }
+  
+  # Model groups
+  if (!is.null(col.group)) {
+    for (i in 1:length(col.group)) {
+      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.group[[i]]),
+                        "}{c}{", names(col.group[i]), "}")
+    }
+    tablehead <- paste0(tablehead, "\\\\ ", linesep) 
+    for (i in 1:length(col.group)) {
+      tablehead <- paste0(tablehead, "\\cmidrule{",
+                          min(col.group[[i]]) + 1, "-",
+                          max(col.group[[i]]) + 1, "}")
+    }
+    tablehead <- paste0(tablehead, "\\\\ ", linesep)
   }
   
   # specify model names
