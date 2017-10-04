@@ -278,9 +278,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     "scalebox = NULL."))
   }
   
-  # Check that col.group is a list
-  if (!is.null(col.group) & !is.list(col.group)) {
-    stop("col.group must be a list")
+  # Check that col.groups is a list
+  if (!is.null(col.groups) & !is.list(col.groups)) {
+    stop("col.groups must be a list")
   }
   
   models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
@@ -483,16 +483,16 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   }
   
   # Model groups
-  if (!is.null(col.group)) {
-    for (i in 1:length(col.group)) {
-      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.group[[i]]),
-                        "}{c}{", names(col.group[i]), "}")
+  if (!is.null(col.groups)) {
+    for (i in 1:length(col.groups)) {
+      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.groups[[i]]),
+                        "}{c}{", names(col.groups[i]), "}")
     }
     tablehead <- paste0(tablehead, "\\\\ ", linesep) 
-    for (i in 1:length(col.group)) {
+    for (i in 1:length(col.groups)) {
       tablehead <- paste0(tablehead, "\\cmidrule{",
-                          min(col.group[[i]]) + 1, "-",
-                          max(col.group[[i]]) + 1, "}")
+                          min(col.groups[[i]]) + 1, "-",
+                          max(col.groups[[i]]) + 1, "}")
     }
     tablehead <- paste0(tablehead, "\\\\ ", linesep)
   }
