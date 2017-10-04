@@ -494,7 +494,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
                           min(col.groups[[i]]) + 1, "-",
                           max(col.groups[[i]]) + 1, "}")
     }
-    tablehead <- paste0(tablehead, "\\\\ ", linesep)
+    tablehead <- paste0(tablehead, linesep)
   }
   
   # specify model names
