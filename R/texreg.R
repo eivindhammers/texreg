@@ -490,7 +490,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     }
     tablehead <- paste0(tablehead, "\\\\ ", linesep) 
     for (i in 1:length(col.groups)) {
-      tablehead <- paste0(tablehead, "\\cmidrule{",
+      tablehead <- paste0(tablehead, "\\cmidrule(lr){",
                           min(col.groups[[i]]) + 1, "-",
                           max(col.groups[[i]]) + 1, "}")
     }
