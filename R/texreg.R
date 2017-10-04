@@ -330,7 +330,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   output.matrix <- outputmatrix(m, single.row, 
       neginfstring = "\\multicolumn{1}{c}{$-\\infty$}", 
       posinfstring = "\\multicolumn{1}{c}{$\\infty$}", leading.zero, digits, 
-      se.prefix = " \\; (", se.suffix = ")", star.prefix = "^{", 
+      se.prefix = " \\; (", se.suffix = ")", star.prefix = "\\sym{", 
       star.suffix = "}", star.char = "*", stars, dcolumn = dcolumn, 
       symbol, bold, bold.prefix = "\\mathbf{", bold.suffix = "}", ci = ci, 
       semicolon = ";\\ ", ci.test = ci.test)
@@ -405,6 +405,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   
   string <- "\n"
   linesep <- if (lyx) "\n\n" else "\n"
+  
+  # \sym definition
+  string <- paste0(string, "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}")
   
   # write table header
   if (use.packages == TRUE) {
