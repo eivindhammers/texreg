@@ -238,7 +238,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     label = "table:coefficients", booktabs = FALSE, dcolumn = FALSE, lyx = FALSE,
     sideways = FALSE, longtable = FALSE, use.packages = TRUE, table = TRUE, 
     no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "",
-    no.table.format = FALSE, add.lines = NULL, ...) {
+    no.table.format = FALSE, add.lines = NULL, center.gof = TRUE, ...) {
   
   stars <- check.stars(stars)
   
@@ -695,7 +695,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
         (length(output.matrix[, 1]))) {
       for (j in 1:length(output.matrix[1, ])) {
-        if (grepl("Num. obs.", output.matrix[i, 1]) == TRUE & j > 1 & dcolumn == TRUE) {
+        if (center.gof == TRUE & j > 1 & dcolumn == TRUE) {
           string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
                            gsub(" ", "", output.matrix[i, j]), "}}")
         } else {
