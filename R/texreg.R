@@ -673,7 +673,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
         (length(output.matrix[, 1]))) {
       for (j in 1:length(output.matrix[1, ])) {
-        if (gof.names[i] == "No. obs." & dcolumn == TRUE) {
+        if (gof.names[i] == "Num.\ obs." & dcolumn == TRUE) {
           string <- paste0(string, "\\multicolumn{1}{r}{\\num{",
                            output.matrix[i, j], "}}")
         } else {
