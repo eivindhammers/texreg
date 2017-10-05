@@ -979,7 +979,7 @@ setMethod("extract", signature = className("ergmm", "latentnet"),
 
 # extension for felm objects (lfe package)
 extract.felm <- function(model, include.nobs = TRUE, include.rsquared = TRUE,
-    include.adjrs = TRUE, include.fstatistic = FALSE, ...) {
+    include.adjrs = TRUE, include.fstatistic = FALSE, include.proj = FALSE, ...) {
 
   s <- summary(model)
   nam <- rownames(s$coefficients)
@@ -996,15 +996,28 @@ extract.felm <- function(model, include.nobs = TRUE, include.rsquared = TRUE,
     gof.decimal <- c(gof.decimal, FALSE)
   }
   if (include.rsquared == TRUE) {
-    gof <- c(gof, s$r2, s$P.r.squared)
-    gof.names <- c(gof.names, "R$^2$ (full model)", "R$^2$ (proj model)")
-    gof.decimal <- c(gof.decimal, TRUE, TRUE)
+    if (include.proj == TRUE) {
+      gof <- c(gof, s$r2, s$P.r.squared)
+      gof.names <- c(gof.names, "R$^2$ (full model)", "R$^2$ (proj model)")
+      gof.decimal <- c(gof.decimal, TRUE, TRUE)
+    } else {
+      gof <- c(gof, s$r2)
+      gof.names <- c(gof.names, "R$^2$ (full model)")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
   }
   if (include.adjrs == TRUE) {
-    gof <- c(gof, s$r2adj, s$P.adj.r.squared)
-    gof.names <- c(gof.names, "Adj.\ R$^2$ (full model)",
-        "Adj.\ R$^2$ (proj model)")
-    gof.decimal <- c(gof.decimal, TRUE, TRUE)
+    if (include.proj == TRUE) {
+      gof <- c(gof, s$r2adj, s$P.adj.r.squared)
+      gof.names <- c(gof.names, "Adj.\ R$^2$ (full model)",
+          "Adj.\ R$^2$ (proj model)")
+      gof.decimal <- c(gof.decimal, TRUE, TRUE)
+    } else {
+      gof <- c(gof, s$r2adj)
+      gof.names <- c(gof.names, "Adj.\ R$^2$ (full model)")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
+      
   }
   if (include.fstatistic == TRUE) {
     gof <- c(gof, s$F.fstat[1], s$F.fstat[4],

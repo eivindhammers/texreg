@@ -392,16 +392,28 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       if (coltypes[i] != "coef") {
         coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
       } else {
-        if (single.row == TRUE) {
-          dl <- compute.width(output.matrix[, i], left = TRUE, 
-              single.row = TRUE, bracket = separator)
-          dr <- compute.width(output.matrix[, i], left = FALSE, 
-              single.row = TRUE, bracket = separator)
+        if (!is.null(digits)) {
+          if (single.row == TRUE) {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                single.row = TRUE, bracket = separator)
+            dr <- compute.width(output.matrix[, i], left = FALSE, 
+                single.row = TRUE, bracket = separator)
+          } else {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                single.row = FALSE, bracket = separator)
+            dr <- compute.width(output.matrix[, i], left = FALSE, 
+                single.row = FALSE, bracket = separator)
+          }
         } else {
-          dl <- compute.width(output.matrix[, i], left = TRUE, 
-              single.row = FALSE, bracket = separator)
-          dr <- compute.width(output.matrix[, i], left = FALSE, 
-              single.row = FALSE, bracket = separator)
+          if (single.row == TRUE) {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                single.row = TRUE, bracket = separator)
+            dr <- digits
+          } else {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                single.row = FALSE, bracket = separator)
+            dr <- digits
+          }
         }
         coldef <- paste0(coldef, "S[table-format=", dl, separator, dr, "]", margin.arg, " ")
       }
