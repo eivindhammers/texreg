@@ -659,7 +659,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (j in 1:length(output.matrix[1, ])) {
       string <- paste0(string, output.matrix[i, j])
       if (j == length(output.matrix[1, ])) {
-        string <- paste0(string, " \\\\", linesep)
+        string <- paste0(string, " \\\\", linesep, " \\\\")
       } else {
         string <- paste0(string, " & ")
       }
