@@ -659,7 +659,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (j in 1:length(output.matrix[1, ])) {
       string <- paste0(string, output.matrix[i, j])
       if (j == length(output.matrix[1, ]) & j %% 2 == 0) {
-          string <- paste0(string, " \\\\", linesep, " \\\\")
+          string <- paste0(string, " \\\\", linesep, " \\\\", linesep)
         } else if (j == length(output.matrix[1, ])) {
           string <- paste0(string, " \\\\", linesep)
         } else {
@@ -680,7 +680,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
         (length(output.matrix[, 1]))) {
       for (j in 1:length(output.matrix[1, ])) {
-        if (grep("Num. obs.", output.matrix[i, 1]) == 1 & j > 1 & dcolumn == TRUE) {
+        if (grepl("Num. obs.", output.matrix[i, 1]) == TRUE & j > 1 & dcolumn == TRUE) {
           string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
                            gsub(" ", "", output.matrix[i, j]), "}}")
         } else {
