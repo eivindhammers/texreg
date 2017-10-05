@@ -355,7 +355,11 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for(item in add.lines){
       if(length(item)!=(length(l)+1))
         stop('Need add.lines arg to be of the same size (1 per column)')
-      extras=rbind(extras,item)
+      if (which(add.lines == item) != 1 & !is.numeric(item)) {
+        extras = rbind(extras, paste0("{", item, "}"))
+      } else {
+        extras = rbind(extras, item)
+      }
     }
     gof.matrix=rbind(extras,gof.matrix)
     gof.names=c(extras[,1],gof.names)
