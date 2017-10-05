@@ -392,7 +392,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       if (coltypes[i] != "coef") {
         coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
       } else {
-        if (!is.null(digits)) {
+        if (is.null(digits)) {
           if (single.row == TRUE) {
             dl <- compute.width(output.matrix[, i], left = TRUE, 
                 single.row = TRUE, bracket = separator)
