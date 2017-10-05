@@ -351,18 +351,17 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   
   # if there is add.lines argument provide, then add 
   if(!is.null(add.lines)){
-    extras=matrix()[0]
+    extras = matrix()[0]
     for(item in add.lines){
-      if(length(item)!=(length(l)+1))
+      if(length(item) != (length(l) + 1))
         stop('Need add.lines arg to be of the same size (1 per column)')
-      if (which(add.lines == item) != 1 & !is.numeric(item)) {
-        extras = rbind(extras, paste0("{", item, "}"))
-      } else {
-        extras = rbind(extras, item)
+      if (any(!is.numeric(item[2:length(item)]))) { # check for characters
+        item <- c(item[1], paste0("{", item[2:length(item)], "}"))
       }
+      extras = rbind(extras, item)
     }
-    gof.matrix=rbind(extras,gof.matrix)
-    gof.names=c(extras[,1],gof.names)
+    gof.matrix = rbind(extras, gof.matrix)
+    gof.names = c(extras[, 1], gof.names)
   }
   
   # combine the coefficient and gof matrices vertically
