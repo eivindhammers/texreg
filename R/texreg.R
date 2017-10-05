@@ -864,11 +864,10 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
       if(length(item) != (length(l) + 1)) {
         stop('Need add.lines arg to be of the same size (1 per column)')
       }
-      if (which(add.lines == item) != 1 & !is.numeric(item)) {
-        extras = rbind(extras, paste0("{", item, "}"))
-      } else {
-        extras = rbind(extras, item)
+      if (any(!is.numeric(item[2:length(item)]))) { # check for characters
+        item <- c(item[1], paste0("{", item[2:length(item)], "}"))
       }
+        extras = rbind(extras, item)
     }
     gof.matrix = rbind(extras, gof.matrix)
     gof.names = c(extras[, 1], gof.names)
