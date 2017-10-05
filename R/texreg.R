@@ -854,16 +854,21 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
   gof.matrix <- gofmatrix(gofs, decimal.matrix, leading.zero, 
       digits)
   
-  # Add lines if possibel 
-  if(!is.null(add.lines)){
-    extras=matrix()[0]
-    for(item in add.lines){
-      if(length(item)!=(length(l)+1))
+  # Add lines if possible
+  if(!is.null(add.lines)) {
+    extras = matrix()[0]
+    for(item in add.lines) {
+      if(length(item) != (length(l) + 1)) {
         stop('Need add.lines arg to be of the same size (1 per column)')
-      extras=rbind(extras,item)
+      }
+      if (which(add.lines == item) != 1 & !is.numeric(item)) {
+        extras = rbind(extras, paste0("{", item, "}"))
+      } else {
+        extras = rbind(extras, item)
+      }
     }
-    gof.matrix=rbind(extras,gof.matrix)
-    gof.names=c(extras[,1],gof.names)
+    gof.matrix = rbind(extras, gof.matrix)
+    gof.names = c(extras[, 1], gof.names)
   }
   
   # combine the coefficient and gof matrices vertically
