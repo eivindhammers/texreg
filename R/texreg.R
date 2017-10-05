@@ -12,7 +12,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
     override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
     reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, ci.test = 0, 
     groups = NULL, custom.columns = NULL, custom.col.pos = NULL, 
-    column.spacing = 2, outer.rule = "=", no.table.format = FALSE,
+    column.spacing = 2, outer.rule = "=", 
     inner.rule = "-", ...) {
   
   stars <- check.stars(stars)
@@ -237,7 +237,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     center = TRUE, caption = "Statistical models", caption.above = FALSE, 
     label = "table:coefficients", booktabs = FALSE, dcolumn = FALSE, lyx = FALSE,
     sideways = FALSE, longtable = FALSE, use.packages = TRUE, table = TRUE, 
-    no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "", ...) {
+    no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "",
+    no.table.format = FALSE, ...) {
   
   stars <- check.stars(stars)
   
