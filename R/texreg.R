@@ -12,7 +12,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
     override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
     reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, ci.test = 0, 
     groups = NULL, custom.columns = NULL, custom.col.pos = NULL, 
-    column.spacing = 2, outer.rule = "=", 
+    column.spacing = 2, outer.rule = "=", no.table.format = FALSE,
     inner.rule = "-", ...) {
   
   stars <- check.stars(stars)
@@ -415,7 +415,11 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             dr <- digits
           }
         }
-        coldef <- paste0(coldef, "S[table-format=", dl, separator, dr, "]", margin.arg, " ")
+        if (no.table.format == FALSE) {
+          coldef <- paste0(coldef, "S[table-format=", dl, separator, dr, "]", margin.arg, " ")
+        } else {
+          coldef <- paste0(coldef, "S", margin.arg, " ")
+        }
       }
     }
   }
