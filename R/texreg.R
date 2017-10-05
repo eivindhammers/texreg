@@ -695,7 +695,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
         (length(output.matrix[, 1]))) {
       for (j in 1:length(output.matrix[1, ])) {
-        if (center.gof == TRUE & j > 1 & dcolumn == TRUE) {
+        if (center.gof == TRUE & j > 1 & is.numeric(output.matrix[i, j]) & 
+            dcolumn == TRUE) {
           string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
                            gsub(" ", "", output.matrix[i, j]), "}}")
         } else {
