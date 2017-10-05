@@ -238,7 +238,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     label = "table:coefficients", booktabs = FALSE, dcolumn = FALSE, lyx = FALSE,
     sideways = FALSE, longtable = FALSE, use.packages = TRUE, table = TRUE, 
     no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "",
-    no.table.format = FALSE, ...) {
+    no.table.format = FALSE, add.lines = NULL, ...) {
   
   stars <- check.stars(stars)
   
@@ -348,6 +348,18 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   # create GOF matrix (the lower part of the final output matrix)
   gof.matrix <- gofmatrix(gofs, decimal.matrix, dcolumn = TRUE, leading.zero, 
       digits)
+  
+  # if there is add.lines argument provide, then add 
+  if(!is.null(add.lines)){
+    extras=matrix()[0]
+    for(item in add.lines){
+      if(length(item)!=(length(l)+1))
+        stop('Need add.lines arg to be of the same size (1 per column)')
+      extras=rbind(extras,item)
+    }
+    gof.matrix=rbind(extras,gof.matrix)
+    gof.names=c(extras[,1],gof.names)
+  }
   
   # combine the coefficient and gof matrices vertically
   output.matrix <- rbind(output.matrix, gof.matrix)
@@ -841,6 +853,18 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
   # create GOF matrix (the lower part of the final output matrix)
   gof.matrix <- gofmatrix(gofs, decimal.matrix, leading.zero, 
       digits)
+  
+  # Add lines if possibel 
+  if(!is.null(add.lines)){
+    extras=matrix()[0]
+    for(item in add.lines){
+      if(length(item)!=(length(l)+1))
+        stop('Need add.lines arg to be of the same size (1 per column)')
+      extras=rbind(extras,item)
+    }
+    gof.matrix=rbind(extras,gof.matrix)
+    gof.names=c(extras[,1],gof.names)
+  }
   
   # combine the coefficient and gof matrices vertically
   output.matrix <- rbind(output.matrix, gof.matrix)
