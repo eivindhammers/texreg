@@ -2,8 +2,624 @@
 # Please use the issue tracker at http://github.com/leifeld/texreg
 # for bug reports, help, or feature requests.
 
+# texreg function ---------------------------------------------------------
 
-# screenreg function
+texreg <- function(l, file = NULL, single.row = FALSE, 
+                   stars = c(0.001, 0.01, 0.05), custom.model.names = NULL,
+                   custom.coef.names = NULL, custom.coef.map = NULL,
+                   custom.gof.names = NULL, custom.note = NULL, digits = 2, 
+                   leading.zero = TRUE, symbol = "\\cdot", override.coef = 0, 
+                   override.se = 0, override.pvalues = 0, override.ci.low = 0, 
+                   override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
+                   reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
+                   ci.test = 0, groups = NULL, custom.columns = NULL, 
+                   custom.col.pos = NULL, bold = 0.00, center = TRUE, 
+                   caption = "Statistical models", caption.above = FALSE, 
+                   label = "table:coefficients", booktabs = FALSE, 
+                   siunitx = FALSE, lyx = FALSE, sideways = FALSE, 
+                   longtable = FALSE, use.packages = TRUE, table = TRUE, 
+                   no.margin = FALSE, fontsize = NULL, scalebox = NULL, 
+                   float.pos = "", col.groups = NULL, no.table.format = FALSE, 
+                   add.lines = NULL, add.lines.sep = FALSE, center.gof = TRUE, ...) {
+  
+  stars <- check.stars(stars)
+  
+  # check siunitx vs. bold
+  if (siunitx == TRUE && bold > 0) {
+    siunitx <- FALSE
+    msg <- paste("The siunitx package and the bold argument cannot be used at",
+        "the same time. Switching off siunitx.")
+    if (length(stars) > 1 || stars == TRUE) {
+      warning(paste(msg, "You should also consider setting stars = 0."))
+    } else {
+      warning(msg)
+    }
+  }
+  
+  # check longtable vs. sideways
+  if (longtable == TRUE && sideways == TRUE) {
+    sideways <- FALSE
+    msg <- paste("The longtable package and sideways environment cannot be", 
+                 "used at the same time. You may want to use the pdflscape package.", 
+                 "Switching off sideways.")
+    warning(msg)
+  }
+  
+  # check longtable vs. float.pos
+  if (longtable == TRUE && !(float.pos %in% c("", "l", "c", "r"))) {
+    float.pos <- ""
+    msg <- paste("When the longtable environment is used, the float.pos", 
+                 "argument can only take one of the \"l\", \"c\", \"r\", or \"\"", 
+                 "(empty) values. Setting float.pos = \"\".")
+    warning(msg)
+  }
+  
+  # check longtable vs. scalebox
+  if (longtable == TRUE && !is.null(scalebox)) {
+    scalebox <- NULL
+    warning(paste("longtable and scalebox are not compatible. Setting", 
+                  "scalebox = NULL."))
+  }
+  
+  # Check that col.groups is a list
+  if (!is.null(col.groups) & !is.list(col.groups)) {
+    stop("col.groups must be a list")
+  }
+  
+  models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
+  gof.names <- get.gof(models)  #extract names of GOFs
+  models <- override(models, override.coef, override.se, override.pvalues, 
+                     override.ci.low, override.ci.up)
+  models <- ciforce(models, ci.force = ci.force, ci.level = ci.force.level)
+  models <- correctDuplicateCoefNames(models)
+  
+  # arrange coefficients and GOFs nicely in a matrix
+  gofs <- aggregate.matrix(models, gof.names, custom.gof.names, digits, 
+                           returnobject = "gofs")
+  m <- aggregate.matrix(models, gof.names, custom.gof.names, digits, 
+                        returnobject = "m")
+  decimal.matrix <- aggregate.matrix(models, gof.names, custom.gof.names, 
+                                     digits, returnobject = "decimal.matrix")
+  
+  if (!is.null(custom.coef.map)) {
+    m <- custommap(m, custom.coef.map)
+  } else {
+    if (nrow(m) != 1) {
+      m <- omit_rename(m, omit.coef = omit.coef, custom.coef.names = custom.coef.names)
+    } else {
+      m
+    }
+  }
+  
+  m <- rearrangeMatrix(m)  #resort matrix and conflate duplicate entries
+  m <- as.data.frame(m)
+  m <- replaceSymbols(m)
+  
+  modnames <- modelnames(l, models, custom.model.names)  # model names
+  
+  # reorder GOF and coef matrix
+  m <- reorder(m, reorder.coef)
+  gofs <- reorder(gofs, reorder.gof)
+  decimal.matrix <- reorder(decimal.matrix, reorder.gof)
+  
+  # what is the optimal length of the labels?
+  lab.list <- c(rownames(m), gof.names)
+  lab.length <- 0
+  for (i in 1:length(lab.list)) {
+    if (nchar(lab.list[i]) > lab.length) {
+      lab.length <- nchar(lab.list[i])
+    }
+  }
+  
+  # create output table with significance stars etc.
+  ci <- logical()
+  for (i in 1:length(models)) {
+    if (length(models[[i]]@se) == 0 && length(models[[i]]@ci.up) > 0) {
+      ci[i] <- TRUE
+    } else {
+      ci[i] <- FALSE
+    }
+  }
+  output.matrix <- outputmatrix(m, single.row, 
+                                neginfstring = "\\multicolumn{1}{c}{$-\\infty$}", 
+                                posinfstring = "\\multicolumn{1}{c}{$\\infty$}", 
+                                leading.zero, digits, se.prefix = " \\; (", 
+                                se.suffix = ")", star.prefix = "\\sym{", 
+                                star.suffix = "}", star.char = "*", stars, 
+                                siunitx = siunitx, symbol, bold, 
+                                bold.prefix = "\\mathbf{", bold.suffix = "}", 
+                                ci = ci, semicolon = ";\\ ", ci.test = ci.test)
+  
+  # grouping
+  output.matrix <- grouping(output.matrix, groups, indentation = "\\quad ", 
+                            single.row = single.row, prefix = "", suffix = "")
+  
+  # create GOF matrix (the lower part of the final output matrix)
+  gof.matrix <- gofmatrix(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
+                          digits)
+  
+  # if there is add.lines argument provide, then add 
+  if (!is.null(add.lines)) {
+    extras <- matrix()[0]
+    for (item in add.lines) {
+      if (length(item) != (length(l) + 1))
+        stop('Need add.lines arg to be of the same size (1 per column)')
+      if (any(!is.numeric(item[2:length(item)]))) # check for characters
+        item <- c(item[1], paste0("{", item[2:length(item)], "}"))
+      extras <- rbind(extras, item)
+    }
+    gof.matrix <- rbind(extras, gof.matrix)
+    # Name rows in GOF matrix to identify when calculating column width
+    row.names(gof.matrix) <- paste0("gof", 1:nrow(gof.matrix))
+    
+    if (add.lines.sep == FALSE) {
+      gof.names <- c(extras[, 1], gof.names)
+    }
+  }
+  
+  # combine the coefficient and gof matrices vertically
+  output.matrix <- rbind(output.matrix, gof.matrix)
+  
+  # add custom columns
+  output.matrix <- customcolumns(output.matrix, custom.columns, custom.col.pos, 
+                                 single.row = single.row, numcoef = nrow(m), 
+                                 groups = groups, modelnames = FALSE)
+  coltypes <- customcolumnnames(modnames, custom.columns, custom.col.pos, 
+                                types = TRUE)
+  modnames <- customcolumnnames(modnames, custom.columns, custom.col.pos, 
+                                types = FALSE)
+  
+  # define columns of the table (define now, add later)
+  coldef <- ""
+  if (no.margin == FALSE) {
+    margin.arg <- ""
+  } else {
+    margin.arg <- "@{}"
+  }
+  coefcount <- 0
+  for (i in 1:length(modnames)) {
+    if (coltypes[i] == "coef") {
+      coefcount <- coefcount + 1
+    }
+    if (single.row == TRUE && coltypes[i] == "coef" && siunitx == FALSE) {
+      if (ci[coefcount] == FALSE) {
+        separator <- ")"
+      } else {
+        separator <- "]"
+      }
+    } else {
+      separator <- "."
+    }
+    if (coltypes[i] %in% c("coef", "customcol")) {
+      alignmentletter <- "c"
+    } else if (coltypes[i] == "coefnames") {
+      alignmentletter <- "l"
+    }
+    if (siunitx == FALSE) {
+      coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
+    } else {
+      if (coltypes[i] != "coef") {
+        coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
+      } else {
+        if (is.null(digits)) {
+          if (single.row == TRUE) {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                center.gof = center.gof,
+                                single.row = TRUE, bracket = separator)
+            dr <- compute.width(output.matrix[, i], left = FALSE, 
+                                center.gof = center.gof,
+                                single.row = TRUE, bracket = separator)
+          } else {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                center.gof = center.gof,
+                                single.row = FALSE, bracket = separator)
+            dr <- compute.width(output.matrix[, i], left = FALSE, 
+                                center.gof = center.gof,
+                                single.row = FALSE, bracket = separator)
+          }
+        } else {
+          if (single.row == TRUE) {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                center.gof = center.gof,
+                                single.row = TRUE, bracket = separator)
+            dr <- digits
+          } else {
+            dl <- compute.width(output.matrix[, i], left = TRUE, 
+                                center.gof = center.gof,
+                                single.row = FALSE, bracket = separator)
+            dr <- digits
+          }
+        }
+        if (no.table.format == FALSE) {
+          if (single.row == TRUE) {
+            decimals <- paste(rep(0, dr), collapse = "")
+            integers <- paste(rep(0, dl), collapse = "")
+            coldef <- paste0(coldef, 
+                             "S[table-format=", dl, separator, dr, ", ",
+                             "table-space-text-post={~(", 
+                             integers, separator, decimals, ")***}", "]", 
+                             margin.arg, " ")
+          } else {
+            coldef <- paste0(coldef, 
+                             "S[table-format=", dl, separator, dr, "]", 
+                             margin.arg, " ")
+          }
+        } else {
+          coldef <- paste0(coldef, "S", margin.arg, " ")
+        }
+      }
+    }
+  }
+  
+  string <- "\n"
+  linesep <- if (lyx) "\n\n" else "\n"
+  
+  if (siunitx == TRUE & single.row == TRUE)
+    string <- paste0(string, "\\def\\x#1{~{(#1)}}", linesep)
+  
+  if (siunitx == TRUE & single.row == FALSE) {
+    string <- paste0(string, 
+                     "\\sisetup{table-space-text-post = \\sym{***}",
+                     ", table-align-text-post = false}", linesep)
+  }
+  
+  # \sym definition
+  string <- paste0(string, "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", 
+                   linesep, linesep)
+  
+  # write table header
+  if (use.packages == TRUE) {
+    if (sideways == TRUE & table == TRUE) {
+      string <- paste0(string, "\\usepackage{rotating}", linesep)
+    }
+    if (booktabs == TRUE) {
+      string <- paste0(string, "\\usepackage{booktabs}", linesep)
+    }
+    if (siunitx == TRUE) {
+      string <- paste0(string, "\\usepackage{siunitx}", linesep)
+    }
+    if (longtable == TRUE) {
+      string <- paste0(string, "\\usepackage{longtable}", linesep)
+    }
+    if (siunitx == TRUE || booktabs == TRUE || sideways == TRUE || 
+        longtable == TRUE) {
+      string <- paste0(string, linesep)
+    }
+  }
+  
+  if (longtable == TRUE) {
+    if (center == TRUE) {
+      string <- paste0(string, "\\begin{center}\n")
+    }
+    if (!is.null(fontsize)) {
+      string <- paste0(string, "\\begin{", fontsize, "}", linesep)
+    }
+    if (float.pos == "") {
+      string <- paste0(string, "\\begin{longtable}{", coldef, "}", linesep)
+    } else {
+      string <- paste0(string, "\\begin{longtable}[", float.pos, "]", linesep)
+    }
+  } else {  # table or sidewaystable
+    if (table == TRUE) {
+      if (sideways == TRUE) {
+        t <- "sideways"
+      } else {
+        t <- ""
+      }
+      if (float.pos == "") {
+        string <- paste0(string, "\\begin{", t, "table}", linesep)
+      } else {
+        string <- paste0(string, "\\begin{", t, "table}[", float.pos, "]", linesep)
+      }
+      if (caption.above == TRUE) {
+        string <- paste0(string, "\\caption{", caption, "}", linesep)
+      }
+      if (center == TRUE) {
+        string <- paste0(string, "\\begin{center}", linesep)
+      }
+      if (!is.null(fontsize)) {
+        string <- paste0(string, "\\begin{", fontsize, "}", linesep)
+      }
+      if (!is.null(scalebox)) {
+        string <- paste0(string, "\\scalebox{", scalebox, "}{\n")
+      }
+    }
+    string <- paste0(string, "\\begin{tabular}{", coldef, "}", linesep)
+  }
+  
+  # horizontal rule above the table
+  tablehead <- ""
+  if (booktabs == TRUE) {
+    tablehead <- paste0(tablehead, "\\toprule", linesep)
+  } else {
+    tablehead <- paste0(tablehead, "\\hline", linesep)
+  }
+  
+  # Model groups
+  if (!is.null(col.groups)) {
+    for (i in 1:length(col.groups)) {
+      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.groups[[i]]),
+                          "}{c}{", names(col.groups[i]), "}")
+    }
+    tablehead <- paste0(tablehead, "\\\\ ", linesep) 
+    for (i in 1:length(col.groups)) {
+      tablehead <- paste0(tablehead, "\\cmidrule(lr){",
+                          min(col.groups[[i]]) + 1, "-",
+                          max(col.groups[[i]]) + 1, "}")
+    }
+    tablehead <- paste0(tablehead, linesep)
+  }
+  
+  # specify model names
+  tablehead <- paste0(tablehead, modnames[1])
+  if (siunitx == TRUE) {
+    for (i in 2:length(modnames)) {
+      if (coltypes[i] != "coef") {
+        tablehead <- paste0(tablehead, " & ", modnames[i])
+      } else {
+        tablehead <- paste0(tablehead, " & \\multicolumn{1}{c}{", modnames[i], 
+                            "}")
+      }
+    }
+  } else {
+    for (i in 2:length(modnames)) {
+      tablehead <- paste0(tablehead, " & ", modnames[i])
+    }
+  }
+  
+  # horizontal rule between model names and coefficients (define now, add later)
+  if (booktabs == TRUE) {
+    tablehead <- paste0(tablehead, " \\\\", linesep, "\\midrule", linesep)
+    tablehead <- paste0(tablehead, "\\addlinespace", linesep)
+  } else {
+    tablehead <- paste0(tablehead, " \\\\", linesep, "\\hline", linesep)
+    tablehead <- paste0(tablehead, "\\\\[-2.1ex]", linesep)
+  }
+  if (longtable == FALSE) {
+    string <- paste0(string, tablehead)
+  }
+  
+  # stars note (define now, add later)
+  if (is.null(stars)) {
+    snote <- ""
+  } else if (any(ci == FALSE)) {
+    st <- sort(stars)
+    if (length(unique(st)) != length(st)) {
+      stop("Duplicate elements are not allowed in the stars argument.")
+    }
+    if (length(st) == 4) {
+      snote <- paste0("$^{***}p<", st[1], 
+                      "$, $^{**}p<", st[2], 
+                      "$, $^*p<", st[3], 
+                      "$, $^{", symbol, "}p<", st[4], "$")
+    } else if (length(st) == 3) {
+      snote <- paste0("$^{***}p<", st[1], 
+                      "$, $^{**}p<", st[2], 
+                      "$, $^*p<", st[3], "$")
+    } else if (length(st) == 2) {
+      snote <- paste0("$^{**}p<", st[1], 
+                      "$, $^*p<", st[2], "$")
+    } else if (length(st) == 1) {
+      snote <- paste0("$^*p<", st[1], "$")
+    } else {
+      snote <- ""
+    }
+    if (is.numeric(ci.test) && !is.na(ci.test) && nchar(snote) > 0 && any(ci)) {
+      snote <- paste(snote, "(or", ci.test, "outside the confidence interval).")
+    } else if (is.numeric(ci.test) && !is.na(ci.test) && any(ci)) {
+      snote <- paste("$^*$", ci.test,  
+                     "outside the confidence interval")
+    }
+  } else if (is.numeric(ci.test) && !is.na(ci.test)) {
+    snote <- paste("$^*$", ci.test,  
+                   "outside the confidence interval")
+  } else {
+    snote <- ""
+  }
+  if (is.null(fontsize)) {
+    notesize <- "scriptsize"
+  } else if (fontsize == "tiny" || fontsize == "scriptsize" || 
+             fontsize == "footnotesize" || fontsize == "small") {
+    notesize <- "tiny"
+  } else if (fontsize == "normalsize") {
+    notesize <- "scriptsize"
+  } else if (fontsize == "large") {
+    notesize <- "footnotesize"
+  } else if (fontsize == "Large") {
+    notesize <- "small"
+  } else if (fontsize == "LARGE") {
+    notesize <- "normalsize"
+  } else if (fontsize == "huge") {
+    notesize <- "large"
+  } else if (fontsize == "Huge") {
+    notesize <- "Large"
+  }
+  if (is.null(custom.note)) {
+    note <- paste0("\\multicolumn{", length(modnames), 
+                   "}{l}{\\", notesize, "{", snote, "}}")
+  } else if (custom.note == "") {
+    note <- ""
+  } else {
+    note <- paste0("\\multicolumn{", length(modnames), 
+                   "}{l}{\\", notesize, "{", custom.note, "}}")
+    note <- gsub("%stars", snote, note, perl = TRUE)
+  }
+  if (longtable == TRUE) {  # longtable requires line break after note & caption
+    note <- paste0(note, "\\\\", linesep)
+  } else {
+    note <- paste0(note, linesep)
+  }
+  
+  # bottom rule (define now, add later)
+  if (booktabs == TRUE) {
+    bottomline <- paste0("\\bottomrule", linesep)
+  } else {
+    bottomline <- paste0("\\hline", linesep)
+  }
+  
+  # write table header (and footer, in the case of longtable)
+  if (longtable == TRUE) {
+    if (caption.above == TRUE) {
+      string <- paste0(string, "\\caption{", caption, "}", linesep, "\\label{", 
+                       label, "}\\\\", linesep, tablehead, "\\endfirsthead", linesep, tablehead, 
+                       "\\endhead", linesep, bottomline, "\\endfoot", linesep, bottomline, note, 
+                       "\\endlastfoot", linesep)
+    } else {
+      string <- paste0(string, tablehead, "\\endfirsthead", linesep, tablehead, 
+                       "\\endhead", linesep, bottomline, "\\endfoot", linesep, bottomline, note, 
+                       "\\caption{", caption, "}", linesep, "\\label{", label, "}", linesep, 
+                       "\\endlastfoot", linesep)
+    }
+  }
+  
+  # fill with spaces
+  max.lengths <- numeric(length(output.matrix[1, ]))
+  for (i in 1:length(output.matrix[1, ])) {
+    max.length <- 0
+    for (j in 1:length(output.matrix[, 1])) {
+      if (nchar(output.matrix[j, i]) > max.length) {
+        max.length <- nchar(output.matrix[j, i])
+      }
+    }
+    max.lengths[i] <- max.length
+  }
+  for (i in 1:length(output.matrix[, 1])) {
+    for (j in 1:length(output.matrix[1, ])) {
+      nzero <- max.lengths[j] - nchar(output.matrix[i, j])
+      zeros <- rep(" ", nzero)
+      zeros <- paste(zeros, collapse = "")
+      output.matrix[i, j] <- paste0(output.matrix[i, j], zeros)
+    }
+  }
+  
+  # write coefficients to string object
+  for (i in 1:(length(output.matrix[, 1]) - length(gof.matrix[, 1]))) {
+    for (j in 1:length(output.matrix[1, ])) {
+      string <- paste0(string, output.matrix[i, j])
+      if (single.row == TRUE) {
+        if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, " \\\\", linesep)
+        } else {
+          string <- paste0(string, " & ")
+        }
+      } else {
+        if (j == length(output.matrix[1, ]) & i %% 2 == 0) {
+          if (booktabs == FALSE) {
+            string <- paste0(string, " \\\\", linesep, "\\\\[-2.1ex]", linesep)
+          } else {
+            string <- paste0(string, " \\\\", linesep, "\\addlinespace", linesep)
+          }
+        } else if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, "\\\\", linesep)
+        } else {
+          string <- paste0(string, " & ")
+        }
+      }
+    }
+  }
+  
+  # If add.lines.sep = TRUE, then we want write the added lines separately from 
+  # the gofs
+  if (add.lines.sep == TRUE) {
+    if (booktabs == TRUE) {
+      string <- paste0(string, "\\midrule", linesep)
+    } else {
+      string <- paste0(string, "\\hline", linesep)
+    }
+    
+    for (i in (length(output.matrix[, 1]) - (length(gof.matrix[, 1]) - 1)):
+         (length(output.matrix[, 1]) - length(gof.names))){
+      for (j in 1:length(output.matrix[1, ])) {
+        string <- paste0(string, output.matrix[i, j])
+        if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, " \\\\", linesep)
+        } else {
+          string <- paste0(string, " & ")
+        }
+      }
+    }
+  }
+  
+  if (length(gof.names) > 0) {
+    # lower mid rule
+    if (booktabs == TRUE) {
+      string <- paste0(string, "\\midrule", linesep)
+    } else {
+      string <- paste0(string, "\\hline", linesep)
+    }
+    
+    # write GOF block
+    for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
+         (length(output.matrix[, 1]))) {
+      for (j in 1:length(output.matrix[1, ])) {
+        if (center.gof == TRUE & j > 1 & siunitx == TRUE & 
+            suppressWarnings(!is.na(as.numeric(output.matrix[i, j])))) {
+          string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
+                           gsub(" ", "", output.matrix[i, j]), "}}")
+        } else {
+          string <- paste0(string, output.matrix[i, j])
+        }
+        if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, " \\\\", linesep)
+        } else {
+          string <- paste0(string, " & ")
+        }
+      }
+    }
+  }
+  
+  # write table footer
+  if (longtable == FALSE) {
+    string <- paste0(string, bottomline)
+    string <- paste0(string, note, "\\end{tabular}", linesep)
+  }
+  
+  # take care of center, scalebox and table environment
+  if (longtable == TRUE) {
+    string <- paste0(string, "\\end{longtable}", linesep)
+    if (!is.null(fontsize)) {
+      string <- paste0(string, "\\end{", fontsize, "}", linesep)
+    }
+    if (center == TRUE) {
+      string <- paste0(string, "\\end{center}", linesep)
+    }
+  } else if (table == TRUE) {
+    if (!is.null(fontsize)) {
+      string <- paste0(string, "\\end{", fontsize, "}", linesep)
+    }
+    if (!is.null(scalebox)) {
+      string <- paste0(string, "}", linesep)
+    }
+    if (caption.above == FALSE) {
+      string <- paste0(string, "\\caption{", caption, "}", linesep)
+    }
+    string <- paste0(string, "\\label{", label, "}", linesep)
+    if (center == TRUE) {
+      string <- paste0(string, "\\end{center}", linesep)
+    }
+    if (sideways == TRUE) {
+      t <- "sideways"
+    } else {
+      t <- ""
+    }
+    string <- paste0(string, "\\end{", t, "table}", linesep)
+  }
+  
+  if (is.null(file) || is.na(file)) {
+    class(string) <- c("character", "texregTable")
+    return(string)
+  } else if (!is.character(file)) {
+    stop("The 'file' argument must be a character string.")
+  } else {
+    sink(file)
+    cat(string)
+    sink()
+    message(paste0("The table was written to the file '", file, "'.\n"))
+  }
+}
+
+# screenreg function ------------------------------------------------------
+
 screenreg <- function(l, file = NULL, single.row = FALSE, 
     stars = c(0.001, 0.01, 0.05), custom.model.names = NULL, 
     custom.coef.names = NULL, custom.coef.map = NULL, custom.gof.names = NULL, 
@@ -13,7 +629,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
     reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, ci.test = 0, 
     groups = NULL, custom.columns = NULL, custom.col.pos = NULL, 
     column.spacing = 2, outer.rule = "=", 
-    inner.rule = "-", ...) {
+    inner.rule = "-", add.lines = NULL, add.lines.sep = FALSE, ...) {
   
   stars <- check.stars(stars)
   
@@ -36,8 +652,13 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
   if (!is.null(custom.coef.map)) {
     m <- custommap(m, custom.coef.map)
   } else {
-    m <- omit_rename(m, omit.coef = omit.coef, custom.coef.names = custom.coef.names)
+    if (nrow(m) != 1) {
+      m <- omit_rename(m, omit.coef = omit.coef, custom.coef.names = custom.coef.names)
+    } else {
+      m
+    }
   }
+  
   m <- rearrangeMatrix(m)  #resort matrix and conflate duplicate entries
   m <- as.data.frame(m)
   
@@ -70,6 +691,21 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
   # create GOF matrix (the lower part of the final output matrix)
   gof.matrix <- gofmatrix(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
       digits)
+  
+  # If user wants to add more lines (ex: fixed effects indicator)
+  if (!is.null(add.lines)) {
+    extras <- matrix()[0]
+    for(item in add.lines) {
+      if(length(item) != (length(l) + 1))
+        stop('Need add.lines arg to be of the same size (1 per column)')
+      extras <- rbind(extras, item, deparse.level = 0)
+    }
+    gof.matrix <- rbind(extras, gof.matrix)
+    
+    if (add.lines.sep == FALSE) {
+      gof.names = c(extras[, 1], gof.names)
+    }
+  }
   
   # combine the coefficient and gof matrices vertically
   output.matrix <- rbind(output.matrix, gof.matrix)
@@ -132,15 +768,35 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
   }
   
   # write coefficients
-  for (i in 2:(length(output.matrix[, 1]) - length(gof.names))) {
+  for (i in 2:(length(output.matrix[, 1]) - length(gof.matrix[,1]))) {
     for (j in 1:length(output.matrix[1, ])) {
-      string <- paste0(string, output.matrix[i,j])
+      string <- paste0(string, output.matrix[i, j])
       if (j == length(output.matrix[1, ])) {
         string <- paste0(string, "\n")
       } else {
         string <- paste0(string, spacing)
       }
     }
+  }
+  
+  #if add.lines.sep = TRUE, then we want write the added lines separately from 
+  #the gofs
+  if(add.lines.sep == TRUE) {
+    if (inner.rule != "") {
+      string <- paste0(string, i.rule, "\n")
+    }
+    
+    for (i in (length(output.matrix[, 1]) - (length(gof.matrix[, 1]) - 1)):
+         (length(output.matrix[, 1]) - length(gof.names))){
+      for (j in 1:length(output.matrix[1, ])) {
+        string <- paste0(string, output.matrix[i,j])
+        if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, "\n")
+        } else {
+          string <- paste0(string, spacing)
+        }
+      }
+    } 
   }
   
   if (length(gof.names) > 0) {
@@ -222,565 +878,8 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
   }
 }
 
+# htmlreg function --------------------------------------------------------
 
-# texreg function
-
-texreg <- function(l, file = NULL, single.row = FALSE, 
-    stars = c(0.001, 0.01, 0.05), custom.model.names = NULL, col.groups = NULL, 
-    custom.coef.names = NULL, custom.coef.map = NULL,
-    custom.gof.names = NULL, custom.note = NULL, digits = 2, 
-    leading.zero = TRUE, symbol = "\\cdot", override.coef = 0, 
-    override.se = 0, override.pvalues = 0, override.ci.low = 0, 
-    override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
-    reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, ci.test = 0, 
-    groups = NULL, custom.columns = NULL, custom.col.pos = NULL, bold = 0.00, 
-    center = TRUE, caption = "Statistical models", caption.above = FALSE, 
-    label = "table:coefficients", booktabs = FALSE, siunitx = FALSE, lyx = FALSE,
-    sideways = FALSE, longtable = FALSE, use.packages = TRUE, table = TRUE, 
-    no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "",
-    no.table.format = FALSE, add.lines = NULL, center.gof = TRUE, ...) {
-  
-  stars <- check.stars(stars)
-  
-  #check dcolumn vs. bold
-  # if (dcolumn == TRUE && bold > 0) {
-  #   dcolumn <- FALSE
-  #   msg <- paste("The dcolumn package and the bold argument cannot be used at", 
-  #       "the same time. Switching off dcolumn.")
-  #   if (length(stars) > 1 || stars == TRUE) {
-  #     warning(paste(msg, "You should also consider setting stars = 0."))
-  #   } else {
-  #     warning(msg)
-  #   }
-  # }
-  
-  # check longtable vs. sideways
-  if (longtable == TRUE && sideways == TRUE) {
-    sideways <- FALSE
-    msg <- paste("The longtable package and sideways environment cannot be", 
-        "used at the same time. You may want to use the pdflscape package.", 
-        "Switching off sideways.")
-    warning(msg)
-  }
-  
-  # check longtable vs. float.pos
-  if (longtable == TRUE && !(float.pos %in% c("", "l", "c", "r"))) {
-    float.pos <- ""
-    msg <- paste("When the longtable environment is used, the float.pos", 
-        "argument can only take one of the \"l\", \"c\", \"r\", or \"\"", 
-        "(empty) values. Setting float.pos = \"\".")
-    warning(msg)
-  }
-  
-  # check longtable vs. scalebox
-  if (longtable == TRUE && !is.null(scalebox)) {
-    scalebox <- NULL
-    warning(paste("longtable and scalebox are not compatible. Setting", 
-    "scalebox = NULL."))
-  }
-  
-  # Check that col.groups is a list
-  if (!is.null(col.groups) & !is.list(col.groups)) {
-    stop("col.groups must be a list")
-  }
-  
-  models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
-  gof.names <- get.gof(models)  #extract names of GOFs
-  models <- override(models, override.coef, override.se, override.pvalues, 
-      override.ci.low, override.ci.up)
-  models <- ciforce(models, ci.force = ci.force, ci.level = ci.force.level)
-  models <- correctDuplicateCoefNames(models)
-  
-  # arrange coefficients and GOFs nicely in a matrix
-  gofs <- aggregate.matrix(models, gof.names, custom.gof.names, digits, 
-      returnobject = "gofs")
-  m <- aggregate.matrix(models, gof.names, custom.gof.names, digits, 
-      returnobject = "m")
-  decimal.matrix <- aggregate.matrix(models, gof.names, custom.gof.names, 
-      digits, returnobject = "decimal.matrix")
-
-  if (!is.null(custom.coef.map)) {
-    m <- custommap(m, custom.coef.map)
-  } else {
-    m <- omit_rename(m, omit.coef = omit.coef, custom.coef.names = custom.coef.names)
-  }
-  m <- rearrangeMatrix(m)  #resort matrix and conflate duplicate entries
-  m <- as.data.frame(m)
-  m <- replaceSymbols(m)
-   
-  modnames <- modelnames(l, models, custom.model.names)  # model names
-  
-  # reorder GOF and coef matrix
-  m <- reorder(m, reorder.coef)
-  gofs <- reorder(gofs, reorder.gof)
-  decimal.matrix <- reorder(decimal.matrix, reorder.gof)
-  
-  # what is the optimal length of the labels?
-  lab.list <- c(rownames(m), gof.names)
-  lab.length <- 0
-  for (i in 1:length(lab.list)) {
-    if (nchar(lab.list[i]) > lab.length) {
-      lab.length <- nchar(lab.list[i])
-    }
-  }
-  
-  # create output table with significance stars etc.
-  ci <- logical()
-  for (i in 1:length(models)) {
-    if (length(models[[i]]@se) == 0 && length(models[[i]]@ci.up) > 0) {
-      ci[i] <- TRUE
-    } else {
-      ci[i] <- FALSE
-    }
-  }
-  output.matrix <- outputmatrix(m, single.row, 
-      neginfstring = "\\multicolumn{1}{c}{$-\\infty$}", 
-      posinfstring = "\\multicolumn{1}{c}{$\\infty$}", leading.zero, digits, 
-      se.prefix = " \\; (", se.suffix = ")", star.prefix = "\\sym{", 
-      star.suffix = "}", star.char = "*", stars, siunitx = siunitx, 
-      symbol, bold, bold.prefix = "\\mathbf{", bold.suffix = "}", ci = ci, 
-      semicolon = ";\\ ", ci.test = ci.test)
-  
-  # grouping
-  output.matrix <- grouping(output.matrix, groups, indentation = "\\quad ", 
-      single.row = single.row, prefix = "", suffix = "")
-  
-  # create GOF matrix (the lower part of the final output matrix)
-  gof.matrix <- gofmatrix(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
-      digits)
-  
-  # if there is add.lines argument provide, then add 
-  if(!is.null(add.lines)){
-    extras = matrix()[0]
-    for(item in add.lines){
-      if(length(item) != (length(l) + 1))
-        stop('Need add.lines arg to be of the same size (1 per column)')
-      if (any(!is.numeric(item[2:length(item)]))) { # check for characters
-        item <- c(item[1], paste0("{", item[2:length(item)], "}"))
-      }
-      extras = rbind(extras, item)
-    }
-    gof.matrix = rbind(extras, gof.matrix)
-    gof.names = c(extras[, 1], gof.names)
-  }
-  
-  # combine the coefficient and gof matrices vertically
-  output.matrix <- rbind(output.matrix, gof.matrix)
-  
-  # add custom columns
-  output.matrix <- customcolumns(output.matrix, custom.columns, custom.col.pos, 
-      single.row = single.row, numcoef = nrow(m), groups = groups, 
-      modelnames = FALSE)
-  coltypes <- customcolumnnames(modnames, custom.columns, custom.col.pos, 
-      types = TRUE)
-  modnames <- customcolumnnames(modnames, custom.columns, custom.col.pos, 
-      types = FALSE)
-  
-  # define columns of the table (define now, add later)
-  coldef <- ""
-  if (no.margin == FALSE) {
-    margin.arg <- ""
-  } else {
-    margin.arg <- "@{}"
-  }
-  coefcount <- 0
-  for (i in 1:length(modnames)) {
-    if (coltypes[i] == "coef") {
-      coefcount <- coefcount + 1
-    }
-    if (single.row == TRUE && coltypes[i] == "coef") {
-      if (ci[coefcount] == FALSE) {
-        separator <- "."
-      } else {
-        separator <- "."
-      }
-    } else {
-      separator <- "."
-    }
-    if (coltypes[i] %in% c("coef", "customcol")) {
-      alignmentletter <- "c"
-    } else if (coltypes[i] == "coefnames") {
-      alignmentletter <- "l"
-    }
-    if (siunitx == FALSE) {
-      coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
-    } else {
-      if (coltypes[i] != "coef") {
-        coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
-      } else {
-        if (is.null(digits)) {
-          if (single.row == TRUE) {
-            dl <- compute.width(output.matrix[, i], left = TRUE, 
-                single.row = TRUE, bracket = separator)
-            dr <- compute.width(output.matrix[, i], left = FALSE, 
-                single.row = TRUE, bracket = separator)
-          } else {
-            dl <- compute.width(output.matrix[, i], left = TRUE, 
-                single.row = FALSE, bracket = separator)
-            dr <- compute.width(output.matrix[, i], left = FALSE, 
-                single.row = FALSE, bracket = separator)
-          }
-        } else {
-          if (single.row == TRUE) {
-            dl <- compute.width(output.matrix[, i], left = TRUE, 
-                                single.row = TRUE, bracket = separator)
-            dr <- digits
-          } else {
-            dl <- compute.width(output.matrix[, i], left = TRUE, 
-                                single.row = FALSE, bracket = separator)
-            dr <- digits
-          }
-        }
-        if (no.table.format == FALSE) {
-          decimals <- paste(rep(0, dr), collapse = "")
-          integers <- paste(rep(0, dl), collapse = "")
-          coldef <- paste0(coldef, 
-                           "S[table-format=", dl, separator, dr, ", ",
-                           "table-space-text-post={~(", 
-                           integers, separator, decimals, ")***}", "]", 
-                           margin.arg, " ")
-        } else {
-          coldef <- paste0(coldef, "S", margin.arg, " ")
-        }
-      }
-    }
-  }
-  
-  string <- "\n"
-  linesep <- if (lyx) "\n\n" else "\n"
-  
-  if (siunitx == TRUE & single.row == TRUE)
-    string <- paste0(string, "\\def\\x#1{~{(#1)}}", linesep)
-  
-  # \sym definition
-  string <- paste0(string, "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", 
-                   linesep)
-  
-  # write table header
-  if (use.packages == TRUE) {
-    if (sideways == TRUE & table == TRUE) {
-      string <- paste0(string, "\\usepackage{rotating}", linesep)
-    }
-    if (booktabs == TRUE) {
-      string <- paste0(string, "\\usepackage{booktabs}", linesep)
-    }
-    if (siunitx == TRUE) {
-      string <- paste0(string, "\\usepackage{siunitx}", linesep)
-    }
-    if (longtable == TRUE) {
-      string <- paste0(string, "\\usepackage{longtable}", linesep)
-    }
-    if (siunitx == TRUE || booktabs == TRUE || sideways == TRUE || 
-        longtable == TRUE) {
-      string <- paste0(string, linesep)
-    }
-  }
-  
-  if (longtable == TRUE) {
-    if (center == TRUE) {
-      string <- paste0(string, "\\begin{center}\n")
-    }
-    if (!is.null(fontsize)) {
-      string <- paste0(string, "\\begin{", fontsize, "}", linesep)
-    }
-    if (float.pos == "") {
-      string <- paste0(string, "\\begin{longtable}{", coldef, "}", linesep)
-    } else {
-      string <- paste0(string, "\\begin{longtable}[", float.pos, "]", linesep)
-    }
-  } else {  # table or sidewaystable
-    if (table == TRUE) {
-      if (sideways == TRUE) {
-        t <- "sideways"
-      } else {
-        t <- ""
-      }
-      if (float.pos == "") {
-        string <- paste0(string, "\\begin{", t, "table}", linesep)
-      } else {
-        string <- paste0(string, "\\begin{", t, "table}[", float.pos, "]", linesep)
-      }
-      if (caption.above == TRUE) {
-        string <- paste0(string, "\\caption{", caption, "}", linesep)
-      }
-      if (center == TRUE) {
-        string <- paste0(string, "\\begin{center}", linesep)
-      }
-      if (!is.null(fontsize)) {
-        string <- paste0(string, "\\begin{", fontsize, "}", linesep)
-      }
-      if (!is.null(scalebox)) {
-        string <- paste0(string, "\\scalebox{", scalebox, "}{\n")
-      }
-    }
-    string <- paste0(string, "\\begin{tabular}{", coldef, "}", linesep)
-  }
-  
-  # horizontal rule above the table
-  tablehead <- ""
-  if (booktabs == TRUE) {
-    tablehead <- paste0(tablehead, "\\toprule", linesep)
-  } else {
-    tablehead <- paste0(tablehead, "\\hline", linesep)
-  }
-  
-  # Model groups
-  if (!is.null(col.groups)) {
-    for (i in 1:length(col.groups)) {
-      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.groups[[i]]),
-                        "}{c}{", names(col.groups[i]), "}")
-    }
-    tablehead <- paste0(tablehead, "\\\\ ", linesep) 
-    for (i in 1:length(col.groups)) {
-      tablehead <- paste0(tablehead, "\\cmidrule(lr){",
-                          min(col.groups[[i]]) + 1, "-",
-                          max(col.groups[[i]]) + 1, "}")
-    }
-    tablehead <- paste0(tablehead, linesep)
-  }
-  
-  # specify model names
-  tablehead <- paste0(tablehead, modnames[1])
-  if (siunitx == TRUE) {
-    for (i in 2:length(modnames)) {
-      if (coltypes[i] != "coef") {
-        tablehead <- paste0(tablehead, " & ", modnames[i])
-      } else {
-        tablehead <- paste0(tablehead, " & \\multicolumn{1}{c}{", modnames[i], 
-            "}")
-      }
-    }
-  } else {
-    for (i in 2:length(modnames)) {
-      tablehead <- paste0(tablehead, " & ", modnames[i])
-    }
-  }
-  
-  # horizontal rule between model names and coefficients (define now, add later)
-  if (booktabs == TRUE) {
-    tablehead <- paste0(tablehead, " \\\\", linesep, "\\midrule", linesep)
-  } else {
-    tablehead <- paste0(tablehead, " \\\\", linesep, "\\hline", linesep)
-  }
-  if (longtable == FALSE) {
-    string <- paste0(string, tablehead)
-  }
-  
-  # stars note (define now, add later)
-  if (is.null(stars)) {
-    snote <- ""
-  } else if (any(ci == FALSE)) {
-    st <- sort(stars)
-    if (length(unique(st)) != length(st)) {
-      stop("Duplicate elements are not allowed in the stars argument.")
-    }
-    if (length(st) == 4) {
-      snote <- paste0("$^{***}p<", st[1], 
-        "$, $^{**}p<", st[2], 
-        "$, $^*p<", st[3], 
-        "$, $^{", symbol, "}p<", st[4], "$")
-    } else if (length(st) == 3) {
-      snote <- paste0("$^{***}p<", st[1], 
-        "$, $^{**}p<", st[2], 
-        "$, $^*p<", st[3], "$")
-    } else if (length(st) == 2) {
-      snote <- paste0("$^{**}p<", st[1], 
-        "$, $^*p<", st[2], "$")
-    } else if (length(st) == 1) {
-      snote <- paste0("$^*p<", st[1], "$")
-    } else {
-      snote <- ""
-    }
-    if (is.numeric(ci.test) && !is.na(ci.test) && nchar(snote) > 0 && any(ci)) {
-      snote <- paste(snote, "(or", ci.test, "outside the confidence interval).")
-    } else if (is.numeric(ci.test) && !is.na(ci.test) && any(ci)) {
-      snote <- paste("$^*$", ci.test,  
-          "outside the confidence interval")
-    }
-  } else if (is.numeric(ci.test) && !is.na(ci.test)) {
-    snote <- paste("$^*$", ci.test,  
-        "outside the confidence interval")
-  } else {
-    snote <- ""
-  }
-  if (is.null(fontsize)) {
-    notesize <- "scriptsize"
-  } else if (fontsize == "tiny" || fontsize == "scriptsize" || 
-      fontsize == "footnotesize" || fontsize == "small") {
-    notesize <- "tiny"
-  } else if (fontsize == "normalsize") {
-    notesize <- "scriptsize"
-  } else if (fontsize == "large") {
-    notesize <- "footnotesize"
-  } else if (fontsize == "Large") {
-    notesize <- "small"
-  } else if (fontsize == "LARGE") {
-    notesize <- "normalsize"
-  } else if (fontsize == "huge") {
-    notesize <- "large"
-  } else if (fontsize == "Huge") {
-    notesize <- "Large"
-  }
-  if (is.null(custom.note)) {
-    note <- paste0("\\multicolumn{", length(modnames), 
-        "}{l}{\\", notesize, "{", snote, "}}")
-  } else if (custom.note == "") {
-    note <- ""
-  } else {
-    note <- paste0("\\multicolumn{", length(modnames), 
-        "}{l}{\\", notesize, "{", custom.note, "}}")
-    note <- gsub("%stars", snote, note, perl = TRUE)
-  }
-  if (longtable == TRUE) {  # longtable requires line break after note & caption
-    note <- paste0(note, "\\\\", linesep)
-  } else {
-    note <- paste0(note, linesep)
-  }
-  
-  # bottom rule (define now, add later)
-  if (booktabs == TRUE) {
-    bottomline <- paste0("\\bottomrule", linesep)
-  } else {
-    bottomline <- paste0("\\hline", linesep)
-  }
-  
-  # write table header (and footer, in the case of longtable)
-  if (longtable == TRUE) {
-    if (caption.above == TRUE) {
-      string <- paste0(string, "\\caption{", caption, "}", linesep, "\\label{", 
-          label, "}\\\\", linesep, tablehead, "\\endfirsthead", linesep, tablehead, 
-          "\\endhead", linesep, bottomline, "\\endfoot", linesep, bottomline, note, 
-          "\\endlastfoot", linesep)
-    } else {
-      string <- paste0(string, tablehead, "\\endfirsthead", linesep, tablehead, 
-          "\\endhead", linesep, bottomline, "\\endfoot", linesep, bottomline, note, 
-          "\\caption{", caption, "}", linesep, "\\label{", label, "}", linesep, 
-          "\\endlastfoot", linesep)
-    }
-  }
-  
-  # fill with spaces
-  max.lengths <- numeric(length(output.matrix[1, ]))
-  for (i in 1:length(output.matrix[1, ])) {
-    max.length <- 0
-    for (j in 1:length(output.matrix[, 1])) {
-      if (nchar(output.matrix[j, i]) > max.length) {
-        max.length <- nchar(output.matrix[j, i])
-      }
-    }
-    max.lengths[i] <- max.length
-  }
-  for (i in 1:length(output.matrix[, 1])) {
-    for (j in 1:length(output.matrix[1, ])) {
-      nzero <- max.lengths[j] - nchar(output.matrix[i, j])
-      zeros <- rep(" ", nzero)
-      zeros <- paste(zeros, collapse = "")
-      output.matrix[i, j] <- paste0(output.matrix[i, j], zeros)
-    }
-  }
-  
-  # write coefficients to string object
-  for (i in 1:(length(output.matrix[, 1]) - length(gof.names))) {
-    for (j in 1:length(output.matrix[1, ])) {
-      string <- paste0(string, output.matrix[i, j])
-      if (single.row == TRUE) {
-        if (j == length(output.matrix[1, ])) {
-          string <- paste0(string, " \\\\", linesep)
-        } else {
-          string <- paste0(string, " & ")
-        }
-      } else {
-        if (j == length(output.matrix[1, ]) & i %% 2 == 0) {
-          string <- paste0(string, " \\\\", linesep, " \\\\", linesep)
-        } else if (j == length(output.matrix[1, ])) {
-          string <- paste0(string, " \\\\", linesep)
-        } else {
-          string <- paste0(string, " & ")
-        }
-      }
-    }
-  }
-  
-  if (length(gof.names) > 0) {
-    # lower mid rule
-    if (booktabs == TRUE) {
-      string <- paste0(string, "\\midrule", linesep)
-    } else {
-      string <- paste0(string, "\\hline", linesep)
-    }
-    
-    # write GOF block
-    for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
-        (length(output.matrix[, 1]))) {
-      for (j in 1:length(output.matrix[1, ])) {
-        if (center.gof == TRUE & j > 1 & siunitx == TRUE & 
-            suppressWarnings(!is.na(as.numeric(output.matrix[i, j])))) {
-          string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
-                           gsub(" ", "", output.matrix[i, j]), "}}")
-        } else {
-          string <- paste0(string, output.matrix[i, j])
-        }
-        if (j == length(output.matrix[1, ])) {
-          string <- paste0(string, " \\\\", linesep)
-        } else {
-          string <- paste0(string, " & ")
-        }
-      }
-    }
-  }
-  
-  # write table footer
-  if (longtable == FALSE) {
-    string <- paste0(string, bottomline)
-    string <- paste0(string, note, "\\end{tabular}", linesep)
-  }
-  
-  # take care of center, scalebox and table environment
-  if (longtable == TRUE) {
-    string <- paste0(string, "\\end{longtable}", linesep)
-    if (!is.null(fontsize)) {
-      string <- paste0(string, "\\end{", fontsize, "}", linesep)
-    }
-    if (center == TRUE) {
-      string <- paste0(string, "\\end{center}", linesep)
-    }
-  } else if (table == TRUE) {
-    if (!is.null(fontsize)) {
-      string <- paste0(string, "\\end{", fontsize, "}", linesep)
-    }
-    if (!is.null(scalebox)) {
-      string <- paste0(string, "}", linesep)
-    }
-    if (caption.above == FALSE) {
-      string <- paste0(string, "\\caption{", caption, "}", linesep)
-    }
-    string <- paste0(string, "\\label{", label, "}", linesep)
-    if (center == TRUE) {
-      string <- paste0(string, "\\end{center}", linesep)
-    }
-    if (sideways == TRUE) {
-      t <- "sideways"
-    } else {
-      t <- ""
-    }
-    string <- paste0(string, "\\end{", t, "table}", linesep)
-  }
-  
-  if (is.null(file) || is.na(file)) {
-    class(string) <- c("character", "texregTable")
-    return(string)
-  } else if (!is.character(file)) {
-    stop("The 'file' argument must be a character string.")
-  } else {
-    sink(file)
-    cat(string)
-    sink()
-    message(paste0("The table was written to the file '", file, "'.\n"))
-  }
-}
-
-
-# htmlreg function
 htmlreg <- function(l, file = NULL, single.row = FALSE, 
     stars = c(0.001, 0.01, 0.05), custom.model.names = NULL, 
     custom.coef.names = NULL, custom.coef.map = NULL, custom.gof.names = NULL, 
@@ -794,7 +893,7 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
     star.symbol = "*", inline.css = TRUE, doctype = TRUE, html.tag = FALSE, 
     head.tag = FALSE, body.tag = FALSE, indentation = "", 
     vertical.align.px = 0, ...) {
-  
+
   stars <- check.stars(stars)
   
   models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
@@ -875,22 +974,6 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
   # create GOF matrix (the lower part of the final output matrix)
   gof.matrix <- gofmatrix(gofs, decimal.matrix, leading.zero, 
       digits)
-  
-  # Add lines if possible
-  if(!is.null(add.lines)) {
-    extras = matrix()[0]
-    for(item in add.lines) {
-      if(length(item) != (length(l) + 1)) {
-        stop('Need add.lines arg to be of the same size (1 per column)')
-      }
-      if (any(!is.numeric(item[2:length(item)]))) { # check for characters
-        item <- c(item[1], paste0("{", item[2:length(item)], "}"))
-      }
-        extras = rbind(extras, item)
-    }
-    gof.matrix = rbind(extras, gof.matrix)
-    gof.names = c(extras[, 1], gof.names)
-  }
   
   # combine the coefficient and gof matrices vertically
   output.matrix <- rbind(output.matrix, gof.matrix)

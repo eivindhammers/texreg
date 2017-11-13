@@ -5,49 +5,50 @@
 \title{Convert regression output to LaTeX or HTML tables}
 \description{Conversion of R regression output to LaTeX or HTML tables.}
 \usage{
-texreg(l, file = NULL, single.row = FALSE, stars = c(0.001, 
-    0.01, 0.05), custom.model.names = NULL, 
-    custom.coef.names = NULL, custom.coef.map = NULL, 
-    custom.gof.names = NULL, custom.note = NULL, digits = 2, 
-    leading.zero = TRUE, symbol = "\\\\cdot", override.coef = 0, 
-    override.se = 0, override.pvalues = 0, override.ci.low = 0, 
-    override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
-    reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
-    ci.test = 0, groups = NULL, custom.columns = NULL, 
-    custom.col.pos = NULL, bold = 0.00, center = TRUE, 
-    caption = "Statistical models", caption.above = FALSE, 
-    label = "table:coefficients", booktabs = FALSE, 
-    dcolumn = FALSE, lyx = FALSE, sideways = FALSE, 
-    longtable = FALSE, use.packages = TRUE, table = TRUE, 
-    no.margin = FALSE, fontsize = NULL, scalebox = NULL,
-    float.pos = "", ...)
+texreg(l, file = NULL, single.row = FALSE, 
+       stars = c(0.001, 0.01, 0.05), custom.model.names = NULL,
+       custom.coef.names = NULL, custom.coef.map = NULL,
+       custom.gof.names = NULL, custom.note = NULL, digits = 2, 
+       leading.zero = TRUE, symbol = "\\\\cdot", override.coef = 0, 
+       override.se = 0, override.pvalues = 0, override.ci.low = 0, 
+       override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
+       reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
+       ci.test = 0, groups = NULL, custom.columns = NULL, 
+       custom.col.pos = NULL, bold = 0.00, center = TRUE, 
+       caption = "Statistical models", caption.above = FALSE, 
+       label = "table:coefficients", booktabs = FALSE, 
+       siunitx = FALSE, lyx = FALSE,sideways = FALSE, 
+       longtable = FALSE, use.packages = TRUE, table = TRUE, 
+       no.margin = FALSE, fontsize = NULL, scalebox = NULL, 
+       float.pos = "", col.groups = NULL, no.table.format = FALSE, 
+       add.lines = NULL, center.gof = TRUE, ...)
 
 htmlreg(l, file = NULL, single.row = FALSE, stars = c(0.001, 
-    0.01, 0.05), custom.model.names = NULL, 
-    custom.coef.names = NULL, custom.coef.map = NULL, 
-    custom.gof.names = NULL, custom.note = NULL, digits = 2, 
-    leading.zero = TRUE, symbol = "&middot;", override.coef = 0, 
-    override.se = 0, override.pvalues = 0, override.ci.low = 0, 
-    override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
-    reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
-    ci.test = 0, groups = NULL, custom.columns = NULL, 
-    custom.col.pos = NULL, bold = 0.00, center = TRUE, 
-    caption = "Statistical models", caption.above = FALSE, 
-    star.symbol = "*", inline.css = TRUE, doctype = TRUE, 
-    html.tag = FALSE, head.tag = FALSE, body.tag = FALSE, 
-    indentation = "", vertical.align.px = 0, ...)
+        0.01, 0.05), custom.model.names = NULL, 
+        custom.coef.names = NULL, custom.coef.map = NULL, 
+        custom.gof.names = NULL, custom.note = NULL, digits = 2, 
+        leading.zero = TRUE, symbol = "&middot;", override.coef = 0, 
+        override.se = 0, override.pvalues = 0, override.ci.low = 0, 
+        override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
+        reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
+        ci.test = 0, groups = NULL, custom.columns = NULL, 
+        custom.col.pos = NULL, bold = 0.00, center = TRUE, 
+        caption = "Statistical models", caption.above = FALSE, 
+        star.symbol = "*", inline.css = TRUE, doctype = TRUE, 
+        html.tag = FALSE, head.tag = FALSE, body.tag = FALSE, 
+        indentation = "", vertical.align.px = 0, ...)
 
 screenreg(l, file = NULL, single.row = FALSE, stars = c(0.001, 
-    0.01, 0.05), custom.model.names = NULL, 
-    custom.coef.names = NULL, custom.coef.map = NULL,
-    custom.gof.names = NULL, custom.note = NULL, digits = 2, 
-    leading.zero = TRUE, symbol = ".", override.coef = 0, 
-    override.se = 0, override.pvalues = 0, override.ci.low = 0, 
-    override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
-    reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
-    ci.test = 0, groups = NULL, custom.columns = NULL, 
-    custom.col.pos = NULL, column.spacing = 2, outer.rule = "=", 
-    inner.rule = "-", ...)
+          0.01, 0.05), custom.model.names = NULL, 
+          custom.coef.names = NULL, custom.coef.map = NULL,
+          custom.gof.names = NULL, custom.note = NULL, digits = 2, 
+          leading.zero = TRUE, symbol = ".", override.coef = 0, 
+          override.se = 0, override.pvalues = 0, override.ci.low = 0, 
+          override.ci.up = 0, omit.coef = NULL, reorder.coef = NULL, 
+          reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, 
+          ci.test = 0, groups = NULL, custom.columns = NULL, 
+          custom.col.pos = NULL, column.spacing = 2, outer.rule = "=", 
+          inner.rule = "-", ...)
 }
 \details{
 texreg converts coefficients, standard errors, significance stars, 
@@ -116,17 +117,17 @@ Users must supply a named list of this form: \code{list('x' = 'First variable', 
 \item{ci.force.level}{If the \code{ci.force} argument is used to convert standard errors to confidence intervals, what confidence level should be used? By default, \code{0.95} is used (i.e., an alpha value of 0.05).}
 \item{ci.test}{If confidence intervals are reported, the \code{ci.test} argument specifies the reference value to establish whether a coefficient/CI is significant. The default value \code{ci.test = 0}, for example, will attach a significance star to coefficients if the confidence interval does not contain \code{0}. If no star should be printed at all, \code{ci.test = NULL} can be used. The \code{ci.test} argument works both for models with native support for confidence intervals and in cases where the \code{ci.force} argument is used.}
 \item{groups}{This argument can be used to group the rows of the table into blocks. For example, there could be one block for hypotheses and another block for control variables. Each group has a heading, and the row labels within a group are indented. The partitions must be handed over as a list of named numeric vectors, where each number is a row index and each name is the heading of the group. Example: \code{groups = list("first group" = 1:4, "second group" = 7:8)}.}
-\item{custom.columns}{An optional list of additional text columns to be inserted into the table, for example coefficient types. The list should contain one or more character vectors with as many character or numeric elements as there are rows. If the vectors in the list are named, the names are used as labels in the table header. For example, \code{custom.columns = list(type = c("a", "b", "c"), 1:3)} will add two columns; the first one is labeled while the second one is not. Note that the numeric elements of the second column will be converted to character objects in this example. The consequence is that decimal alignment with the \pkg{dcolumn} package is switched off in these columns. Note that this argument is processed after any arguments that affect the number of rows.}
+\item{custom.columns}{An optional list of additional text columns to be inserted into the table, for example coefficient types. The list should contain one or more character vectors with as many character or numeric elements as there are rows. If the vectors in the list are named, the names are used as labels in the table header. For example, \code{custom.columns = list(type = c("a", "b", "c"), 1:3)} will add two columns; the first one is labeled while the second one is not. Note that the numeric elements of the second column will be converted to character objects in this example. The consequence is that decimal alignment with the \pkg{siunitx} package is switched off in these columns. Note that this argument is processed after any arguments that affect the number of rows.}
 \item{custom.col.pos}{An optional integer vector of positions for the columns given in the \code{custom columns} argument. For example, if there are three custom columns, \code{custom.col.pos = c(1, 3, 3)} will insert the first custom column before the first column of the original table and the remaining two custom columns after the second column of the original table. By default, all custom columns are placed after the first column, which usually contains the coefficient names.}
 
-\item{bold}{[only in the \code{texreg} and \code{htmlreg} functions] The p value threshold below which the coefficient shall be formatted in a bold font. For example, \code{bold = 0.05} will cause all coefficients which are significant at the 95\% level to be formatted in bold. Note that this is not compatible with the dcolumn argument in the \code{texreg} function. If both are \code{TRUE}, dcolumn is switched off and a warning message appears. Note also that it is advisable to use \code{stars = FALSE} together with the \code{bold} argument because having both bolded coefficients and significance stars usually does not make any sense.}
+\item{bold}{[only in the \code{texreg} and \code{htmlreg} functions] The p value threshold below which the coefficient shall be formatted in a bold font. For example, \code{bold = 0.05} will cause all coefficients which are significant at the 95\% level to be formatted in bold. Note that this is not compatible with the siunitx argument in the \code{texreg} function. If both are \code{TRUE}, siunitx is switched off and a warning message appears. Note also that it is advisable to use \code{stars = FALSE} together with the \code{bold} argument because having both bolded coefficients and significance stars usually does not make any sense.}
 \item{center}{[only in the \code{texreg} and \code{htmlreg} functions] Should the table be horizontally aligned at the center of the page?}
 \item{caption}{[only in the \code{texreg} and \code{htmlreg} functions] Set the caption of the table. }
 \item{caption.above}{[only in the \code{texreg} and \code{htmlreg} functions] Should the caption of the table be placed above the table? By default, it is placed below the table.}
 
 \item{label}{[only in the \code{texreg} function] Set the label of the \code{table} environment.}
 \item{booktabs}{[only in the \code{texreg} function] Use the \code{booktabs} LaTeX package to get thick horizontal rules in the output table (recommended).}
-\item{dcolumn}{[only in the \code{texreg} function] Use the \code{dcolumn} LaTeX package to get a nice alignment of the coefficients (recommended).}
+\item{siunitx}{[only in the \code{texreg} function] Use the \code{siunitx} LaTeX package to get a nice alignment of the coefficients (recommended).}
 \item{lyx}{[only in the \code{texreg} function] \code{logical}; if \code{TRUE}, each newline in the output is doubled, which facilitates transferring the output into the LyX document processor. }
 \item{sideways}{[only in the \code{texreg} function] If \code{sideways = TRUE} is set, the \code{table} floating environment is replaced by a \code{sidewaystable} float, and the \code{rotating} package is loaded in the preamble. The argument only has an effect if \code{table = TRUE} is also set.}
 \item{longtable}{ [only in the \code{texreg} function] If \code{longtable = TRUE} is set, the \code{longtable} environment from the \code{longtable} LaTeX package is used to set tables across multiple pages. Note that this argument is not compatible with the \code{sideways} and \code{scalebox} arguments. These arguments will be automatically switched off when \code{longtable = TRUE} is set. }
@@ -136,6 +137,11 @@ Users must supply a named list of this form: \code{list('x' = 'First variable', 
 \item{fontsize}{[only in the \code{texreg} function] The \code{fontsize} argument serves to change the font size used in the table. Valid values are \code{"tiny"}, \code{"scriptsize"}, \code{"footnotesize"}, \code{"small"}, \code{"normalsize"}, \code{"large"}, \code{"Large"}, \code{"LARGE"}, \code{"huge"}, and \code{"Huge"}. Note that the \code{scalebox} argument often achieves better results when the goal is to change the size of the table. }
 \item{scalebox}{[only in the \code{texreg} function] The \code{scalebox} argument serves to resize the table. For example, \code{scalebox = 1.0} is equivalent to the normal size, \code{scalebox = 0.5} decreases the size of the table by one half, and \code{scalebox = 2.0} doubles the space occupied by the table. Note that the \code{scalebox} argument does not work when the \code{longtable} argument is used. }
 \item{float.pos}{[only in the \code{texreg} function] This argument specifies where the table should be located on the page or in the document. By default, no floating position is specified, and LaTeX takes care of the position automatically. Possible values include \code{h} (here), \code{p} (page), \code{t} (top), \code{b} (bottom), any combination thereof, e.g. \code{tb}, or any of these values followed by an exclamation mark, e.g. \code{t!}, in order to enforce this position. The square brackets do not have to be specified.}
+\item{col.groups}{[only in the \code{texreg} function] This argument allows for grouping models.} 
+\item{no.table.format}{[only in the \code{texreg} function] This argument modifies how the \code{siunitx} argument sets column formats; if \code{no.table.format = TRUE}, the no-frills "S" column is used. If \code{no.table.format = FALSE}, the column format is set according to the max number of integers and decimals in a given column, e.g. S[table-format = 3.2]. Defaults to \code{FALSE}.}
+\item{add.lines}{[only in the \code{texreg} function] Adds lines to the bottom part of the table. Input must be a list, with vector elements of length equal to the number of columns in the table.}
+\item{center.gof}{[only in the \code{texreg} function] If \code{siunitx = TRUE}, setting center.gof = TRUE will put the GOF rows in \\multicolumn's, exempting them from being interpreted by siunitx, and instead centering cells.}
+
 
 \item{star.symbol}{[only in the \code{htmlreg} function] Alternative characters for the significance stars can be specified. This is useful if \pkg{knitr} and Markdown are used for HTML report generation. In Markdown, asterisks or stars are interpreted as special characters, so they have to be escaped. To make \code{htmlreg} compatible with Markdown, specify \code{star.symbol = "\\*"}. Note that some other modifications are recommended for usage with \pkg{knitr} in combination with Markdown or HTML (see the \code{inline.css}, \code{doctype}, \code{html.tag}, \code{head.tag}, and \code{body.tag} arguments).}
 \item{inline.css}{[only in the \code{htmlreg} function] Should the CSS stylesheets be embedded directly in the code of the table (\code{inline.css = TRUE}), or should the CSS stylesheets be enclosed in the <head> tag, that is, separated from the table code (\code{inline.css = FALSE})? Having inline CSS code makes the code of the table more complex, but sometimes it may be helpful when only the table shall be printed, without the head of the HTML file (for example when the table is embedded in a \pkg{knitr} report). As a rule of thumb: use inline CSS if the table is not saved to a file.}
@@ -168,7 +174,7 @@ Philip Leifeld (\url{http://www.philipleifeld.com})
 library(nlme)
 model.1 <- lme(distance ~ age, data = Orthodont, random = ~ 1)
 model.2 <- lme(distance ~ age + Sex, data = Orthodont, random = ~ 1)
-texreg(list(model.1, model.2), booktabs = TRUE, dcolumn = TRUE)
+texreg(list(model.1, model.2), booktabs = TRUE, siunitx = TRUE)
 
 #Ordinary least squares model (example from the 'lm' help file)
 ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
