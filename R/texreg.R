@@ -60,7 +60,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
   output.matrix <- outputmatrix(m, single.row, neginfstring = "-Inf", 
       posinfstring = "Inf", leading.zero, digits, 
       se.prefix = " (", se.suffix = ")", star.prefix = " ", star.suffix = "", 
-      star.char = "*", stars, dcolumn = TRUE, symbol = symbol, bold = 0, 
+      star.char = "*", stars, siunitx = TRUE, symbol = symbol, bold = 0, 
       bold.prefix = "", bold.suffix = "", ci = ci, ci.test = ci.test)
   
   # grouping
@@ -68,7 +68,7 @@ screenreg <- function(l, file = NULL, single.row = FALSE,
       single.row = single.row, prefix = "", suffix = "")
   
   # create GOF matrix (the lower part of the final output matrix)
-  gof.matrix <- gofmatrix(gofs, decimal.matrix, dcolumn = TRUE, leading.zero, 
+  gof.matrix <- gofmatrix(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
       digits)
   
   # combine the coefficient and gof matrices vertically
@@ -235,7 +235,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     reorder.gof = NULL, ci.force = FALSE, ci.force.level = 0.95, ci.test = 0, 
     groups = NULL, custom.columns = NULL, custom.col.pos = NULL, bold = 0.00, 
     center = TRUE, caption = "Statistical models", caption.above = FALSE, 
-    label = "table:coefficients", booktabs = FALSE, dcolumn = FALSE, lyx = FALSE,
+    label = "table:coefficients", booktabs = FALSE, siunitx = FALSE, lyx = FALSE,
     sideways = FALSE, longtable = FALSE, use.packages = TRUE, table = TRUE, 
     no.margin = FALSE, fontsize = NULL, scalebox = NULL, float.pos = "",
     no.table.format = FALSE, add.lines = NULL, center.gof = TRUE, ...) {
@@ -243,16 +243,16 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   stars <- check.stars(stars)
   
   #check dcolumn vs. bold
-  if (dcolumn == TRUE && bold > 0) {
-    dcolumn <- FALSE
-    msg <- paste("The dcolumn package and the bold argument cannot be used at", 
-        "the same time. Switching off dcolumn.")
-    if (length(stars) > 1 || stars == TRUE) {
-      warning(paste(msg, "You should also consider setting stars = 0."))
-    } else {
-      warning(msg)
-    }
-  }
+  # if (dcolumn == TRUE && bold > 0) {
+  #   dcolumn <- FALSE
+  #   msg <- paste("The dcolumn package and the bold argument cannot be used at", 
+  #       "the same time. Switching off dcolumn.")
+  #   if (length(stars) > 1 || stars == TRUE) {
+  #     warning(paste(msg, "You should also consider setting stars = 0."))
+  #   } else {
+  #     warning(msg)
+  #   }
+  # }
   
   # check longtable vs. sideways
   if (longtable == TRUE && sideways == TRUE) {
@@ -337,7 +337,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       neginfstring = "\\multicolumn{1}{c}{$-\\infty$}", 
       posinfstring = "\\multicolumn{1}{c}{$\\infty$}", leading.zero, digits, 
       se.prefix = " \\; (", se.suffix = ")", star.prefix = "\\sym{", 
-      star.suffix = "}", star.char = "*", stars, dcolumn = dcolumn, 
+      star.suffix = "}", star.char = "*", stars, siunitx = siunitx, 
       symbol, bold, bold.prefix = "\\mathbf{", bold.suffix = "}", ci = ci, 
       semicolon = ";\\ ", ci.test = ci.test)
   
@@ -346,7 +346,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       single.row = single.row, prefix = "", suffix = "")
   
   # create GOF matrix (the lower part of the final output matrix)
-  gof.matrix <- gofmatrix(gofs, decimal.matrix, dcolumn = TRUE, leading.zero, 
+  gof.matrix <- gofmatrix(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
       digits)
   
   # if there is add.lines argument provide, then add 
@@ -390,9 +390,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     }
     if (single.row == TRUE && coltypes[i] == "coef") {
       if (ci[coefcount] == FALSE) {
-        separator <- ")"
+        separator <- "."
       } else {
-        separator <- "]"
+        separator <- "."
       }
     } else {
       separator <- "."
@@ -402,7 +402,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     } else if (coltypes[i] == "coefnames") {
       alignmentletter <- "l"
     }
-    if (dcolumn == FALSE) {
+    if (siunitx == FALSE) {
       coldef <- paste0(coldef, alignmentletter, margin.arg, " ")
     } else {
       if (coltypes[i] != "coef") {
@@ -432,7 +432,13 @@ texreg <- function(l, file = NULL, single.row = FALSE,
           }
         }
         if (no.table.format == FALSE) {
-          coldef <- paste0(coldef, "S[table-format=", dl, separator, dr, "]", margin.arg, " ")
+          decimals <- paste(rep(0, dr), collapse = "")
+          integers <- paste(rep(0, dl), collapse = "")
+          coldef <- paste0(coldef, 
+                           "S[table-format=", dl, separator, dr, ", ",
+                           "table-space-text-post={~(", 
+                           integers, separator, decimals, ")***}", "]", 
+                           margin.arg, " ")
         } else {
           coldef <- paste0(coldef, "S", margin.arg, " ")
         }
@@ -443,8 +449,12 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   string <- "\n"
   linesep <- if (lyx) "\n\n" else "\n"
   
+  if (siunitx == TRUE & single.row == TRUE)
+    string <- paste0(string, "\\def\\x#1{~{(#1)}}", linesep)
+  
   # \sym definition
-  string <- paste0(string, "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}")
+  string <- paste0(string, "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", 
+                   linesep)
   
   # write table header
   if (use.packages == TRUE) {
@@ -454,13 +464,13 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     if (booktabs == TRUE) {
       string <- paste0(string, "\\usepackage{booktabs}", linesep)
     }
-    if (dcolumn == TRUE) {
-      string <- paste0(string, "\\usepackage{dcolumn}", linesep)
+    if (siunitx == TRUE) {
+      string <- paste0(string, "\\usepackage{siunitx}", linesep)
     }
     if (longtable == TRUE) {
       string <- paste0(string, "\\usepackage{longtable}", linesep)
     }
-    if (dcolumn == TRUE || booktabs == TRUE || sideways == TRUE || 
+    if (siunitx == TRUE || booktabs == TRUE || sideways == TRUE || 
         longtable == TRUE) {
       string <- paste0(string, linesep)
     }
@@ -531,7 +541,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   
   # specify model names
   tablehead <- paste0(tablehead, modnames[1])
-  if (dcolumn == TRUE) {
+  if (siunitx == TRUE) {
     for (i in 2:length(modnames)) {
       if (coltypes[i] != "coef") {
         tablehead <- paste0(tablehead, " & ", modnames[i])
@@ -673,13 +683,21 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   for (i in 1:(length(output.matrix[, 1]) - length(gof.names))) {
     for (j in 1:length(output.matrix[1, ])) {
       string <- paste0(string, output.matrix[i, j])
-      if (j == length(output.matrix[1, ]) & i %% 2 == 0) {
+      if (single.row == TRUE) {
+        if (j == length(output.matrix[1, ])) {
+          string <- paste0(string, " \\\\", linesep)
+        } else {
+          string <- paste0(string, " & ")
+        }
+      } else {
+        if (j == length(output.matrix[1, ]) & i %% 2 == 0) {
           string <- paste0(string, " \\\\", linesep, " \\\\", linesep)
         } else if (j == length(output.matrix[1, ])) {
           string <- paste0(string, " \\\\", linesep)
         } else {
           string <- paste0(string, " & ")
         }
+      }
     }
   }
   
@@ -695,8 +713,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     for (i in (length(output.matrix[, 1]) - (length(gof.names) - 1)):
         (length(output.matrix[, 1]))) {
       for (j in 1:length(output.matrix[1, ])) {
-        if (center.gof == TRUE & j > 1 & is.numeric(output.matrix[i, j]) & 
-            dcolumn == TRUE) {
+        if (center.gof == TRUE & j > 1 & siunitx == TRUE & 
+            suppressWarnings(!is.na(as.numeric(output.matrix[i, j])))) {
           string <- paste0(string, "\\multicolumn{1}{c}{\\num{",
                            gsub(" ", "", output.matrix[i, j]), "}}")
         } else {
@@ -846,7 +864,7 @@ htmlreg <- function(l, file = NULL, single.row = FALSE,
       posinfstring = "Inf", leading.zero, digits, 
       se.prefix = " (", se.suffix = ")", star.char = star.symbol, 
       star.prefix = paste0("<sup", css.sup, ">"), star.suffix = "</sup>", 
-      stars, dcolumn = TRUE, symbol, bold = bold, bold.prefix = "<b>", 
+      stars, siunitx = TRUE, symbol, bold = bold, bold.prefix = "<b>", 
       bold.suffix = "</b>", ci = ci, ci.test = ci.test)
   
   # grouping

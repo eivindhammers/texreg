@@ -650,7 +650,7 @@ stars.string <- function(pval, stars, star.char, star.prefix, star.suffix,
 # return the output matrix with coefficients, SEs and significance stars
 outputmatrix <- function(m, single.row, neginfstring, posinfstring, 
     leading.zero, digits, se.prefix, se.suffix, star.prefix, star.suffix, 
-    star.char = "*", stars, dcolumn = TRUE, symbol, bold, bold.prefix, 
+    star.char = "*", stars, siunitx = TRUE, symbol, bold, bold.prefix, 
     bold.suffix, ci = rep(FALSE, length(m) / 3), semicolon = "; ", 
     ci.test = 0) {
   
@@ -677,8 +677,13 @@ outputmatrix <- function(m, single.row, neginfstring, posinfstring,
         } else {
           
           # in case of CIs, replace brackets by square brackets
-          se.prefix.current <- se.prefix
-          se.suffix.current <- se.suffix
+          if (siunitx == TRUE) {
+            se.prefix.current <- "\\x{"
+            se.suffix.current <- "}"
+          } else {
+            se.prefix.current <- se.prefix
+            se.suffix.current <- se.suffix
+          }
           if (ci[k - 1] == TRUE) {
             se.prefix.current <- gsub("\\(", "[", se.prefix.current)
             se.suffix.current <- gsub("\\)", "]", se.suffix.current)
@@ -709,7 +714,7 @@ outputmatrix <- function(m, single.row, neginfstring, posinfstring,
             }
           }
           
-          if (dcolumn == TRUE) {
+          if (siunitx == TRUE) {
             dollar <- ""
           } else {
             dollar <- "$"
@@ -786,7 +791,7 @@ outputmatrix <- function(m, single.row, neginfstring, posinfstring,
             }
           }
           
-          if (dcolumn == TRUE) {
+          if (siunitx == TRUE) {
             dollar <- ""
           } else {
             dollar <- "$"
@@ -960,9 +965,9 @@ fill.spaces <- function(x) {
 
 
 # Return the goodness-of-fit matrix (i.e., the lower block of the final matrix)
-gofmatrix <- function(gofs, decimal.matrix, dcolumn = TRUE, leading.zero, 
+gofmatrix <- function(gofs, decimal.matrix, siunitx = TRUE, leading.zero, 
     digits) {
-  if (dcolumn == TRUE) {
+  if (siunitx == TRUE) {
     dollar <- ""
   } else {
     dollar <- "$"
