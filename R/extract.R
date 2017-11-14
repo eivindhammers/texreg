@@ -1016,7 +1016,6 @@ extract.felm <- function(model, include.nobs = TRUE, include.rsquared = TRUE,
       gof.names <- c(gof.names, "Adj.\ R$^2$ (full model)")
       gof.decimal <- c(gof.decimal, TRUE)
     }
-      
   }
   if (include.fstatistic == TRUE) {
     gof <- c(gof, s$F.fstat[1], s$F.fstat[4],
