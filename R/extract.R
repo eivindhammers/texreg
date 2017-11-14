@@ -3592,7 +3592,8 @@ setMethod("extract", signature = className("rq", "quantreg"),
 
 # extension for sarlm objects (spdep package)
 extract.sarlm <- function(model, include.nobs = TRUE, include.loglik = TRUE,
-    include.aic = TRUE, include.lr = TRUE, include.wald = TRUE, ...) {
+    include.aic = TRUE, include.lr = TRUE, include.wald = TRUE,
+    include.params = FALSE, ...) {
   s <- summary(model, ...)
 
   names <- rownames(s$Coef)
@@ -3643,10 +3644,15 @@ extract.sarlm <- function(model, include.nobs = TRUE, include.loglik = TRUE,
 
   if (include.nobs == TRUE) {
     n <- length(s$fitted.values)
+    gof <- c(gof, n)
+    gof.names <- c(gof.names, "Num.\ obs.")
+    gof.decimal <- c(gof.decimal, FALSE)
+  }
+  if (include.params == TRUE) {
     param <- s$parameters
-    gof <- c(gof, n, param)
-    gof.names <- c(gof.names, "Num.\ obs.", "Parameters")
-    gof.decimal <- c(gof.decimal, FALSE, FALSE)
+    gof <- c(gof, param)
+    gof.names <- c(gof.names, "Parameters")
+    gof.decimal <- c(gof.decimal, FALSE)
   }
   if (include.loglik == TRUE) {
     ll <- s$LL
