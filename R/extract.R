@@ -1,7 +1,6 @@
 # The texreg package was written by Philip Leifeld.
 # Please use the issue tracker at http://github.com/leifeld/texreg
-# for bug reports, help or feature requests.
-
+# for bug reports, help, or feature requests.
 
 # generic extract function
 setGeneric("extract", function(model, ...) standardGeneric("extract"),

@@ -1018,20 +1018,25 @@ reorder <- function(mat, new.order) {
 
 
 # compute column width left and right of the decimal separator
-compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")") {
+compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")",
+                          center.gof = FALSE) {
   if (single.row == FALSE) {
     v[which(!grepl("\\.", v))] <- paste0(v[which(!grepl("\\.", v))], ".")
     ssp <- strsplit(v, "\\.")
     left.side <- character()
     right.side <- character()
     for (i in 1:length(ssp)) {
-      if (length(ssp[[i]]) == 1) {
-        ssp[[i]][2] <- ""
-      } else if (length(ssp[[i]]) == 3) {
-        ssp[[i]] <- c(ssp[[i]][1], paste0(ssp[[i]][2], ".", ssp[[i]][3]))
+      if (center.gof == TRUE & grepl("gof", names(ssp[i]))) {
+        # do nothing
+      } else {
+        if (length(ssp[[i]]) == 1) {
+          ssp[[i]][2] <- ""
+        } else if (length(ssp[[i]]) == 3) {
+          ssp[[i]] <- c(ssp[[i]][1], paste0(ssp[[i]][2], ".", ssp[[i]][3]))
+        }
+        left.side[i] <- ssp[[i]][1]
+        right.side[i] <- ssp[[i]][2]
       }
-      left.side[i] <- ssp[[i]][1]
-      right.side[i] <- ssp[[i]][2]
     }
   } else {
     ssp <- strsplit(v, paste0("\\", bracket))
@@ -1040,9 +1045,12 @@ compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")") {
     for (i in 1:length(ssp)) {
       if (length(ssp[[i]]) == 0) {
         # do nothing because empty cell
+      } else if (center.gof == TRUE & grepl("gof", names(ssp[i]))) {
+        # do nothing
       } else {
         left.side <- append(left.side, ssp[[i]][1])
-        right.side <- append(right.side, ssp[[i]][2])
+        coef.dec <- strsplit(ssp[[i]][2], "\\x", fixed = TRUE)
+        right.side <- append(right.side, coef.dec[1])
       }
     }
   }

@@ -1,3 +1,6 @@
+# The texreg package was written by Philip Leifeld.
+# Please use the issue tracker at http://github.com/leifeld/texreg
+# for bug reports, help, or feature requests.
 
 # function which plots coefficients and confidence intervals ('coefplot')
 coefplot <- function(labels, estimates, lower.inner = NULL, 
