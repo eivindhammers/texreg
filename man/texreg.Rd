@@ -20,8 +20,9 @@ texreg(l, file = NULL, single.row = FALSE,
        siunitx = FALSE, lyx = FALSE,sideways = FALSE, 
        longtable = FALSE, use.packages = TRUE, table = TRUE, 
        no.margin = FALSE, fontsize = NULL, scalebox = NULL, 
-       float.pos = "", col.groups = NULL, no.table.format = FALSE, 
-       add.lines = NULL, center.gof = TRUE, ...)
+       float.pos = "", col.groups = NULL, col.groups.2 = NULL,
+       no.table.format = FALSE, add.lines = NULL, add.lines.sep = FALSE,
+       center.gof = TRUE, ...)
 
 htmlreg(l, file = NULL, single.row = FALSE, stars = c(0.001, 
         0.01, 0.05), custom.model.names = NULL, 
@@ -137,7 +138,8 @@ Users must supply a named list of this form: \code{list('x' = 'First variable', 
 \item{fontsize}{[only in the \code{texreg} function] The \code{fontsize} argument serves to change the font size used in the table. Valid values are \code{"tiny"}, \code{"scriptsize"}, \code{"footnotesize"}, \code{"small"}, \code{"normalsize"}, \code{"large"}, \code{"Large"}, \code{"LARGE"}, \code{"huge"}, and \code{"Huge"}. Note that the \code{scalebox} argument often achieves better results when the goal is to change the size of the table. }
 \item{scalebox}{[only in the \code{texreg} function] The \code{scalebox} argument serves to resize the table. For example, \code{scalebox = 1.0} is equivalent to the normal size, \code{scalebox = 0.5} decreases the size of the table by one half, and \code{scalebox = 2.0} doubles the space occupied by the table. Note that the \code{scalebox} argument does not work when the \code{longtable} argument is used. }
 \item{float.pos}{[only in the \code{texreg} function] This argument specifies where the table should be located on the page or in the document. By default, no floating position is specified, and LaTeX takes care of the position automatically. Possible values include \code{h} (here), \code{p} (page), \code{t} (top), \code{b} (bottom), any combination thereof, e.g. \code{tb}, or any of these values followed by an exclamation mark, e.g. \code{t!}, in order to enforce this position. The square brackets do not have to be specified.}
-\item{col.groups}{[only in the \code{texreg} function] This argument allows for grouping models.} 
+\item{col.groups}{[only in the \code{texreg} function] This argument allows for grouping models. Must be specified as a list of the form \code{list("Group name" = m:n)}, where m and n are the first and last column contained in the group. Several groups can be specified.} 
+\item{col.groups}{[only in the \code{texreg} function] Add a second column group.} 
 \item{no.table.format}{[only in the \code{texreg} function] This argument modifies how the \code{siunitx} argument sets column formats; if \code{no.table.format = TRUE}, the no-frills "S" column is used. If \code{no.table.format = FALSE}, the column format is set according to the max number of integers and decimals in a given column, e.g. S[table-format = 3.2]. Defaults to \code{FALSE}.}
 \item{add.lines}{[only in the \code{texreg} function] Adds lines to the bottom part of the table. Input must be a list, with vector elements of length equal to the number of columns in the table.}
 \item{center.gof}{[only in the \code{texreg} function] If \code{siunitx = TRUE}, setting center.gof = TRUE will put the GOF rows in \\multicolumn's, exempting them from being interpreted by siunitx, and instead centering cells.}
