@@ -19,8 +19,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
                    siunitx = FALSE, lyx = FALSE, sideways = FALSE, 
                    longtable = FALSE, use.packages = TRUE, table = TRUE, 
                    no.margin = FALSE, fontsize = NULL, scalebox = NULL, 
-                   float.pos = "", col.groups = NULL, no.table.format = FALSE, 
-                   add.lines = NULL, add.lines.sep = FALSE, center.gof = TRUE, ...) {
+                   float.pos = "", col.groups = NULL, col.groups.2 = NULL, 
+                   no.table.format = FALSE, add.lines = NULL, 
+                   add.lines.sep = FALSE, center.gof = TRUE, ...) {
   
   stars <- check.stars(stars)
   
@@ -64,6 +65,11 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   # Check that col.groups is a list
   if (!is.null(col.groups) & !is.list(col.groups)) {
     stop("col.groups must be a list")
+  }
+  
+  # Check that col.groups.2 is a list
+  if (!is.null(col.groups.2) & !is.list(col.groups.2)) {
+    stop("col.groups.2 must be a list")
   }
   
   models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
@@ -346,6 +352,21 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       tablehead <- paste0(tablehead, "\\cmidrule(lr){",
                           min(col.groups[[i]]) + 1, "-",
                           max(col.groups[[i]]) + 1, "}")
+    }
+    tablehead <- paste0(tablehead, linesep)
+  }
+  
+  # Add additional groups
+  if (!is.null(col.groups.2)) {
+    for (i in 1:length(col.groups.2)) {
+      tablehead <- paste0(tablehead, " & \\multicolumn{", length(col.groups.2[[i]]),
+                          "}{c}{", names(col.groups.2[i]), "}")
+    }
+    tablehead <- paste0(tablehead, "\\\\ ", linesep) 
+    for (i in 1:length(col.groups.2)) {
+      tablehead <- paste0(tablehead, "\\cmidrule(lr){",
+                          min(col.groups.2[[i]]) + 1, "-",
+                          max(col.groups.2[[i]]) + 1, "}")
     }
     tablehead <- paste0(tablehead, linesep)
   }
