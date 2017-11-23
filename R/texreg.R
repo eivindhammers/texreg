@@ -21,7 +21,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
                    no.margin = FALSE, fontsize = NULL, scalebox = NULL, 
                    float.pos = "", col.groups = NULL, col.groups.2 = NULL, 
                    no.table.format = FALSE, add.lines = NULL, 
-                   add.lines.sep = FALSE, center.gof = TRUE, ...) {
+                   add.lines.sep = FALSE, center.gof = TRUE,
+                   no.model.names = NULL, ...) {
   
   stars <- check.stars(stars)
   
@@ -372,22 +373,23 @@ texreg <- function(l, file = NULL, single.row = FALSE,
   }
   
   # specify model names
-  tablehead <- paste0(tablehead, modnames[1])
-  if (siunitx == TRUE) {
-    for (i in 2:length(modnames)) {
-      if (coltypes[i] != "coef") {
+  if (is.null(no.model.names)) {
+    tablehead <- paste0(tablehead, modnames[1])
+    if (siunitx == TRUE) {
+      for (i in 2:length(modnames)) {
+        if (coltypes[i] != "coef") {
+          tablehead <- paste0(tablehead, " & ", modnames[i])
+        } else {
+          tablehead <- paste0(tablehead, " & \\multicolumn{1}{c}{", modnames[i], 
+                              "}")
+        }
+      }
+    } else {
+      for (i in 2:length(modnames)) {
         tablehead <- paste0(tablehead, " & ", modnames[i])
-      } else {
-        tablehead <- paste0(tablehead, " & \\multicolumn{1}{c}{", modnames[i], 
-                            "}")
       }
     }
-  } else {
-    for (i in 2:length(modnames)) {
-      tablehead <- paste0(tablehead, " & ", modnames[i])
-    }
   }
-  
   # horizontal rule between model names and coefficients (define now, add later)
   if (booktabs == TRUE) {
     tablehead <- paste0(tablehead, " \\\\", linesep, "\\midrule", linesep)
