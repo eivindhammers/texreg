@@ -237,6 +237,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             dr <- digits
           }
         }
+        
+        n.stars <- max.stars(output.matrix[, i])
+        
         if (no.table.format == FALSE) {
           if (single.row == TRUE) {
             decimals <- paste(rep(0, dr), collapse = "")
@@ -244,11 +247,14 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             coldef <- paste0(coldef, 
                              "S[table-format=", dl, separator, dr, ", ",
                              "table-space-text-post={~(", 
-                             integers, separator, decimals, ")***}", "]", 
+                             integers, separator, decimals, ")", 
+                             paste(rep("*", n.stars), collapse = ""), "}]", 
                              margin.arg, " ")
           } else {
             coldef <- paste0(coldef, 
-                             "S[table-format=", dl, separator, dr, "]", 
+                             "S[table-format=", dl, separator, dr, ", ",
+                             "table-space-text-post=\\sym{", 
+                             paste(rep("*", n.stars), collapse = ""), "}]", 
                              margin.arg, " ")
           }
         } else {
@@ -265,9 +271,7 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     string <- paste0(string, "\\def\\x#1{~{(#1)}}", linesep)
   
   if (siunitx == TRUE & single.row == FALSE) {
-    string <- paste0(string, 
-                     "\\sisetup{table-space-text-post = \\sym{***}",
-                     ", table-align-text-post = false}", linesep)
+    string <- paste0(string, "\\sisetup{table-align-text-post=false}", linesep)
   }
   
   # \sym definition

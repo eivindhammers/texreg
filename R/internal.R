@@ -1065,6 +1065,10 @@ compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")",
   return(v.length)
 }
 
+# Max number of stars in each column
+max.stars <- function(v) {
+  max(sapply(regmatches(v, gregexpr("\\*", v)), length))
+}
 
 # convert SEs and p values to confidence intervals
 ciforce <- function(models, ci.force = rep(FALSE, length(models)), 
