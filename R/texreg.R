@@ -156,13 +156,13 @@ texreg <- function(l, file = NULL, single.row = FALSE,
       extras <- rbind(extras, item)
     }
     gof.matrix <- rbind(extras, gof.matrix)
-    # Name rows in GOF matrix to identify when calculating column width
-    row.names(gof.matrix) <- paste0("gof", 1:nrow(gof.matrix))
-    
     if (add.lines.sep == FALSE) {
       gof.names <- c(extras[, 1], gof.names)
     }
   }
+  
+  # Name rows in GOF matrix to identify when calculating column width
+  row.names(gof.matrix) <- paste0("gof", 1:nrow(gof.matrix))
   
   # combine the coefficient and gof matrices vertically
   output.matrix <- rbind(output.matrix, gof.matrix)
@@ -216,6 +216,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             dr <- compute.width(output.matrix[, i], left = FALSE, 
                                 center.gof = center.gof,
                                 single.row = TRUE, bracket = separator)
+            minus <- any.negative(output.matrix[, i])
+            minus <- if (minus == TRUE) "-" else ""
           } else {
             dl <- compute.width(output.matrix[, i], left = TRUE, 
                                 center.gof = center.gof,
@@ -223,6 +225,8 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             dr <- compute.width(output.matrix[, i], left = FALSE, 
                                 center.gof = center.gof,
                                 single.row = FALSE, bracket = separator)
+            minus <- any.negative(output.matrix[, i])
+            minus <- if (minus == TRUE) "-" else ""
           }
         } else {
           if (single.row == TRUE) {
@@ -230,11 +234,15 @@ texreg <- function(l, file = NULL, single.row = FALSE,
                                 center.gof = center.gof,
                                 single.row = TRUE, bracket = separator)
             dr <- digits
+            minus <- any.negative(output.matrix[, i])
+            minus <- if (minus == TRUE) "-" else ""
           } else {
             dl <- compute.width(output.matrix[, i], left = TRUE, 
                                 center.gof = center.gof,
                                 single.row = FALSE, bracket = separator)
             dr <- digits
+            minus <- any.negative(output.matrix[, i])
+            minus <- if (minus == TRUE) "-" else ""
           }
         }
         
@@ -245,14 +253,14 @@ texreg <- function(l, file = NULL, single.row = FALSE,
             decimals <- paste(rep(0, dr), collapse = "")
             integers <- paste(rep(0, dl), collapse = "")
             coldef <- paste0(coldef, 
-                             "S[table-format=", dl, separator, dr, ", ",
+                             "S[table-format=", minus, dl, separator, dr, ", ",
                              "table-space-text-post={~(", 
                              integers, separator, decimals, ")", 
                              paste(rep("*", n.stars), collapse = ""), "}]", 
                              margin.arg, " ")
           } else {
             coldef <- paste0(coldef, 
-                             "S[table-format=", dl, separator, dr, ", ",
+                             "S[table-format=", minus, dl, separator, dr, ", ",
                              "table-space-text-post=\\sym{", 
                              paste(rep("*", n.stars), collapse = ""), "}]", 
                              margin.arg, " ")
@@ -271,7 +279,9 @@ texreg <- function(l, file = NULL, single.row = FALSE,
     string <- paste0(string, "\\def\\x#1{~{(#1)}}", linesep)
   
   if (siunitx == TRUE & single.row == FALSE) {
-    string <- paste0(string, "\\sisetup{table-align-text-post=false}", linesep)
+    string <- paste0(string, "\\sisetup{table-space-text-pre=(, ", 
+                     "table-align-text-pre=false, ", 
+                     "table-align-text-post=false}", linesep)
   }
   
   # \sym definition

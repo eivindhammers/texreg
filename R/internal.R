@@ -1056,6 +1056,7 @@ compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")",
   }
   if (left == TRUE) {
     left.side <- sub("\\\\; ", "", left.side)
+    left.side <- sub("^[-(]", "", left.side)
     v.length <- max(nchar(left.side), na.rm = TRUE)
   } else {
     right.side <- sub("\\^\\{", "", right.side)
@@ -1063,6 +1064,14 @@ compute.width <- function(v, left = TRUE, single.row = FALSE, bracket = ")",
     v.length <- max(nchar(right.side), na.rm = TRUE)
   }
   return(v.length)
+}
+
+any.negative <- function(v) {
+  negative <- logical()
+  for(i in 1:length(v)) {
+    negative <- append(negative, grepl("^[-]", v[i]))
+  }
+  return(any(negative == TRUE))
 }
 
 # Max number of stars in each column
